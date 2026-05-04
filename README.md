@@ -2,8 +2,8 @@
 
 How to execute:
 
-`git clone https://github.com/sntosz/eng-soft.git
- cd eng-soft
- npm install
+`git clone https://github.com/sntosz/eng-soft.git \n
+ cd eng-soft \n
+ npm install \n
  npm run dev
 `
