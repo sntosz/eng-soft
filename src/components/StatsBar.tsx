@@ -3,8 +3,7 @@ import { Users, Trophy, ShoppingBag, Flame } from "lucide-react";
 const stats = [
   { icon: Users, label: "Members", value: "1,247" },
   { icon: Trophy, label: "Season Wins", value: "18" },
-  { icon: ShoppingBag, label: "Orders", value: "342" },
-  { icon: Flame, label: "Win Streak", value: "5" },
+  { icon: ShoppingBag, label: "Orders", value: "342" }
 ];
 
 const StatsBar = () => (

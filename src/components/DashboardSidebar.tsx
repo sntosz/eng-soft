@@ -1,14 +1,15 @@
 import Image from "next/image";
 import { Home, CreditCard, ShoppingBag, Trophy, Calendar, Settings, User, LogOut } from "lucide-react";
-import logoSwe from "@/assets/logo-swe.png";
+import logoSwe from "@/assets/logo-aaaes.png";
+import { NavLink } from "./NavLink";
 
 const navItems = [
-  { icon: Home, label: "Dashboard", active: true },
-  { icon: CreditCard, label: "Member ID" },
-  { icon: ShoppingBag, label: "Merch Store" },
-  { icon: Trophy, label: "Matches" },
-  { icon: Calendar, label: "Events" },
-  { icon: Settings, label: "Settings" },
+  { icon: Home, label: "Home", href: "/", active: true },
+  { icon: CreditCard, label: "Membros", href: "/members" },
+  { icon: ShoppingBag, label: "Loja", href: "/store" },
+  { icon: Trophy, label: "Partidas", href: "/matches" },
+  { icon: Calendar, label: "Eventos", href: "/events" },
+  { icon: Settings, label: "Configurações", href: "/settings" },
 ];
 
 const DashboardSidebar = () => {
@@ -25,8 +26,9 @@ const DashboardSidebar = () => {
       {/* Nav */}
       <nav className="flex-1 space-y-1 w-full">
         {navItems.map((item) => (
-          <button
+          <NavLink
             key={item.label}
+            href={item.href}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
               item.active
                 ? "bg-primary/10 text-primary"
@@ -35,7 +37,7 @@ const DashboardSidebar = () => {
           >
             <item.icon className="w-5 h-5 shrink-0 mx-auto lg:mx-0" />
             <span className="hidden lg:block">{item.label}</span>
-          </button>
+          </NavLink>
         ))}
       </nav>
 
@@ -46,8 +48,8 @@ const DashboardSidebar = () => {
             <User className="w-4 h-4 text-primary" />
           </div>
           <div className="hidden lg:block">
-            <p className="text-sm font-medium text-foreground">Alex Chen</p>
-            <p className="text-xs text-muted-foreground">SWE '26</p>
+            <p className="text-sm font-medium text-foreground">Aluno</p>
+            <p className="text-xs text-muted-foreground">Engenharia de Software</p>
           </div>
         </div>
       </div>

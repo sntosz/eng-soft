@@ -16,10 +16,9 @@ const MemberIdCard = () => {
         <div className="flex items-center gap-3">
           <Image src={logoSwe} alt="SWE" width={32} height={32} />
           <span className="font-display font-bold text-primary-foreground text-sm tracking-widest uppercase">
-            Digital Member ID
+            Carteirinha Digtal de Membro
           </span>
         </div>
-        <span className="text-primary-foreground/70 text-xs font-mono">#SWE-2026-0847</span>
       </div>
 
       {/* Body */}
