@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 130 16% 6%;
+    --foreground: 130 12% 92%;
+
+    --card: 130 14% 9%;
+    --card-foreground: 130 12% 92%;
+
+    --popover: 130 14% 9%;
+    --popover-foreground: 130 12% 92%;
+
+    --primary: 132 50% 36%;
+    --primary-foreground: 130 16% 6%;
+
+    --secondary: 132 24% 14%;
+    --secondary-foreground: 130 12% 82%;
+
+    --muted: 128 14% 11%;
+    --muted-foreground: 125 10% 45%;
+
+    --accent: 132 50% 36%;
+    --accent-foreground: 130 16% 6%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 130 20% 15%;
+    --input: 130 20% 15%;
+    --ring: 132 50% 36%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 130 18% 4%;
+    --sidebar-foreground: 125 10% 45%;
+    --sidebar-primary: 132 50% 36%;
+    --sidebar-primary-foreground: 130 16% 6%;
+    --sidebar-accent: 130 18% 10%;
+    --sidebar-accent-foreground: 130 12% 92%;
+    --sidebar-border: 130 18% 12%;
+    --sidebar-ring: 132 50% 36%;
+
+    --gold-glow: 122 39% 49%;
+    --surface-elevated: 128 16% 12%;
+    --badge-success: 150 60% 40%;
+    --badge-warning: 35 90% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+}
+
+@layer utilities {
+  .gold-gradient {
+    background: linear-gradient(135deg, hsl(132 50% 36%), hsl(140 45% 28%));
+  }
+  .gold-text {
+    background: linear-gradient(135deg, hsl(122 39% 49%), hsl(140 45% 28%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .card-glow {
+    box-shadow: 0 0 30px -10px hsl(132 50% 36% / 0.15);
+  }
+  .surface-glass {
+    background: hsl(128 16% 12% / 0.8);
+    backdrop-filter: blur(20px);
+  }
+}
