@@ -1,9 +1,47 @@
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { Calendar, MapPin } from "lucide-react";
 import logoSwe from "@/assets/logo-swe.png";
 import logoLaw from "@/assets/logo-law.png";
+import { supabase } from "@/lib/supabase";
 
 const UpcomingMatch = () => {
+  const [match, setMatch] = useState<any | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function load() {
+      try {
+        const now = new Date().toISOString();
+        const { data, error } = await supabase
+          .from("matches")
+          .select("*")
+          .gt("date", now)
+          .order("date", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (error) throw error;
+        if (mounted && data) {
+          setMatch(data);
+        }
+      } catch (err) {
+        console.error("Failed to load upcoming match from Supabase:", err);
+      }
+    }
+
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const home = match?.home_team || { short: "SWE", name: "Software Eng." };
+  const away = match?.away_team || { short: "LAW", name: "Law School" };
+  const dateLabel = match?.date ? new Date(match.date).toLocaleString() : "Apr 15, 2026 · 7:00 PM";
+  const location = match?.location || "Main Arena";
+
   return (
     <div className="bg-card border border-border rounded-xl p-6 space-y-4">
       <div className="flex items-center justify-between">
@@ -17,10 +55,10 @@ const UpcomingMatch = () => {
       <div className="flex items-center justify-between py-4">
         <div className="flex flex-col items-center gap-2 flex-1">
           <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center p-2 border-2 border-primary/30">
-            <Image src={logoSwe} alt="Software Engineering" width={48} height={48} />
+            <Image src={logoSwe} alt={home.name} width={48} height={48} />
           </div>
-          <span className="text-sm font-semibold text-foreground">SWE</span>
-          <span className="text-xs text-muted-foreground">Software Eng.</span>
+          <span className="text-sm font-semibold text-foreground">{home.short}</span>
+          <span className="text-xs text-muted-foreground">{home.name}</span>
         </div>
 
         <div className="flex flex-col items-center gap-1">
@@ -30,10 +68,10 @@ const UpcomingMatch = () => {
 
         <div className="flex flex-col items-center gap-2 flex-1">
           <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center p-2 border-2 border-border">
-            <Image src={logoLaw} alt="Law School" width={48} height={48} />
+            <Image src={logoLaw} alt={away.name} width={48} height={48} />
           </div>
-          <span className="text-sm font-semibold text-foreground">LAW</span>
-          <span className="text-xs text-muted-foreground">Law School</span>
+          <span className="text-sm font-semibold text-foreground">{away.short}</span>
+          <span className="text-xs text-muted-foreground">{away.name}</span>
         </div>
       </div>
 
@@ -41,11 +79,11 @@ const UpcomingMatch = () => {
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <Calendar className="w-3.5 h-3.5 text-primary" />
-          Apr 15, 2026 · 7:00 PM
+          {dateLabel}
         </span>
         <span className="flex items-center gap-1.5">
           <MapPin className="w-3.5 h-3.5 text-primary" />
-          Main Arena
+          {location}
         </span>
       </div>
     </div>

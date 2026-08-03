@@ -1,14 +1,39 @@
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { Package, CheckCircle2, Clock } from "lucide-react";
 import logoSwe from "@/assets/logo-swe.png";
+import { supabase } from "@/lib/supabase";
 
-const orders = [
+const fallbackOrders = [
   { name: "Engineering Hoodie", status: "Ready for Pickup", ready: true },
   { name: "SWE Cap — Black Edition", status: "Processing", ready: false },
   { name: "Athletic Shorts Pack", status: "Ready for Pickup", ready: true },
 ];
 
 const MemberIdCard = () => {
+  const [orders, setOrders] = useState(fallbackOrders);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function load() {
+      try {
+        const { data, error } = await supabase.from("orders").select("name,status,ready").order("created_at", { ascending: false }).limit(5);
+        if (error) throw error;
+        if (mounted && data) {
+          setOrders(data as any);
+        }
+      } catch (err) {
+        console.error("Failed to load orders from Supabase:", err);
+      }
+    }
+
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden card-glow animate-pulse-gold">
       {/* Header band */}
@@ -43,7 +68,7 @@ const MemberIdCard = () => {
             <h4 className="text-sm font-semibold text-foreground">Active Orders</h4>
           </div>
           <div className="space-y-2">
-            {orders.map((order) => (
+            {orders.map((order: any) => (
               <div
                 key={order.name}
                 className="flex items-center justify-between px-4 py-3 rounded-lg bg-muted/50 border border-border"
