@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, LogIn, LogOut, Search, Settings } from "lucide-react";
+import Link from "next/link";
+import { LogIn, LogOut } from "lucide-react";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import JerseyBanner from "@/components/JerseyBanner";
 import MemberIdCard from "@/components/MemberIdCard";
@@ -13,17 +12,11 @@ import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 const HomePage = () => {
-  const { user } = useCurrentUser();
+  const { user, isLoggedIn } = useCurrentUser();
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  useEffect(() => {
-    setIsLoggedIn(localStorage.getItem("aaaes:isLoggedIn") === "true");
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("aaaes:isLoggedIn");
-    setIsLoggedIn(false);
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
   };
 

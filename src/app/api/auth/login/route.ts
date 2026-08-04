@@ -25,7 +25,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Credenciais inválidas" }, { status: 401 });
     }
 
-    // senha_hash is the column in the database; guard missing field
     const hash = (data as any).senha_hash || (data as any).password_hash || null;
     const match = await comparePassword(password, hash);
     if (!match) {
@@ -34,7 +33,16 @@ export async function POST(req: Request) {
 
     const token = signToken({ sub: data.id, email: data.email, nome: data.nome, curso: (data as any).curso });
 
-    return NextResponse.json({ user: { id: data.id, nome: data.nome, email: data.email, curso: (data as any).curso }, token });
+    const response = NextResponse.json({ user: { id: data.id, nome: data.nome, email: data.email, curso: (data as any).curso } });
+    
+    response.cookies.set("auth-token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60,
+    });
+
+    return response;
   } catch (err: any) {
     console.error("Auth login error:", err);
     return NextResponse.json({ error: err.message || String(err) }, { status: 500 });

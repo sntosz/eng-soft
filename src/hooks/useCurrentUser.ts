@@ -1,35 +1,31 @@
 import { useEffect, useState } from "react";
-import { jwtDecode } from "jwt-decode";
-
-interface DecodedToken {
-  sub: string;
-  email: string;
-  nome?: string;
-  name?: string;
-  curso?: string;
-}
 
 export function useCurrentUser() {
   const [user, setUser] = useState<{ nome: string; email: string; curso: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    try {
-      const token = localStorage.getItem("aaaes:token");
-      if (token) {
-        const decoded = jwtDecode<DecodedToken>(token);
-        setUser({
-          nome: decoded.nome || decoded.name || "Usuário",
-          email: decoded.email,
-          curso: decoded.curso || "Engenharia de Software",
-        });
+    async function fetchUser() {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data.user);
+          setIsLoggedIn(true);
+        } else {
+          setIsLoggedIn(false);
+        }
+      } catch (err) {
+        console.error("Erro ao obter usuário:", err);
+        setIsLoggedIn(false);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Erro ao decodificar token:", err);
-    } finally {
-      setLoading(false);
     }
+
+    fetchUser();
   }, []);
 
-  return { user, loading };
+  return { user, loading, isLoggedIn };
 }

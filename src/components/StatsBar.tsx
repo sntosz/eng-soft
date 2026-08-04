@@ -22,7 +22,6 @@ const StatsBar = () => {
           }));
         }
       } catch (err) {
-        // keep fallback values
         console.error("Failed to load stats from Supabase:", err);
       }
     }

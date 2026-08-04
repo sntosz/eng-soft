@@ -38,10 +38,7 @@ const LoginPage = () => {
         return;
       }
 
-      // save token and mark logged in
-      localStorage.setItem("aaaes:token", json.token);
-      localStorage.setItem("aaaes:isLoggedIn", "true");
-
+      // Token é automaticamente armazenado em cookie httpOnly pelo servidor
       router.push("/");
     } catch (err: any) {
       setError(err.message || String(err));
