@@ -10,9 +10,10 @@ import MemberIdCard from "@/components/MemberIdCard";
 import StatsBar from "@/components/StatsBar";
 import UpcomingMatch from "@/components/UpcomingMatch";
 import { Button } from "@/components/ui/button";
-import { getDate } from "date-fns";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 const HomePage = () => {
+  const { user } = useCurrentUser();
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -33,9 +34,15 @@ const HomePage = () => {
       <main className="flex-1 overflow-y-auto">
         <header className="sticky top-0 z-10 surface-glass border-b border-border px-6 py-4 flex items-center justify-between">
           <div>
-            <h1 className="font-display text-xl font-bold text-foreground">
-              Bem-vindo de volta, <span className="gold-text">Alex</span>
-            </h1>
+            { isLoggedIn == true ? (
+              <h1 className="font-display text-xl font-bold text-foreground">
+                Bem-vindo de volta, <span className="gold-text">{user.nome}</span>
+              </h1>) : (
+                <h1 className="font-display text-xl font-bold text-foreground">
+                  Seja bem-vindo, <span className="gold-text">Visitante</span>
+                </h1>
+            )
+            }
             <p className="text-sm text-muted-foreground">Atlética Engenharia de Software — Temporada {new Date().getFullYear()}</p>
           </div>
           <div className="flex items-center gap-3">

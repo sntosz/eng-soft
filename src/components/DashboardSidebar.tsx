@@ -2,7 +2,6 @@ import Image from "next/image";
 import { Home, CreditCard, ShoppingBag, Trophy, Calendar, Settings, User, LogOut } from "lucide-react";
 import logoSwe from "@/assets/logo-aaaes.png";
 import { NavLink } from "./NavLink";
-import { supabase } from "@/lib/supabase";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 const navItems = [
@@ -52,7 +51,7 @@ const DashboardSidebar = () => {
           </div>
           <div className="hidden lg:block">
             <p className="text-sm font-medium text-foreground">{user?.nome || "Carregando..."}</p>
-            <p className="text-xs text-muted-foreground">Engenharia de Software</p>
+            <p className="text-xs text-muted-foreground">{user?.curso || "Carregando..."}</p>
           </div>
         </div>
       </div>

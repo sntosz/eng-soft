@@ -6,10 +6,11 @@ interface DecodedToken {
   email: string;
   nome?: string;
   name?: string;
+  curso?: string;
 }
 
 export function useCurrentUser() {
-  const [user, setUser] = useState<{ nome: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ nome: string; email: string; curso: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,6 +21,7 @@ export function useCurrentUser() {
         setUser({
           nome: decoded.nome || decoded.name || "Usuário",
           email: decoded.email,
+          curso: decoded.curso || "Engenharia de Software",
         });
       }
     } catch (err) {
