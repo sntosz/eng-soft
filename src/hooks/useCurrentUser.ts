@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 
 export function useCurrentUser() {
-  const [user, setUser] = useState<{ nome: string; email: string; curso: string } | null>(null);
+  const [user, setUser] = useState<{
+    id?: string;
+    nome: string;
+    email: string;
+    curso: string;
+    ano_curso?: string;
+    e_admin?: boolean;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 

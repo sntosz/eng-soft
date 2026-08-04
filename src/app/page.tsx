@@ -27,7 +27,7 @@ const HomePage = () => {
       <main className="flex-1 overflow-y-auto">
         <header className="sticky top-0 z-10 surface-glass border-b border-border px-6 py-4 flex items-center justify-between">
           <div>
-            { isLoggedIn == true ? (
+            { isLoggedIn ? (
               <h1 className="font-display text-xl font-bold text-foreground">
                 Bem-vindo de volta, <span className="gold-text">{user.nome}</span>
               </h1>) : (

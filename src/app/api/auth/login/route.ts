@@ -13,7 +13,7 @@ export async function POST(req: Request) {
 
     const { data, error } = await supabaseAdmin
       .from("membros")
-      .select("id,nome,email,curso,senha_hash")
+      .select("id,nome,email,curso,ano_turma,senha_hash")
       .eq("email", email)
       .maybeSingle();
 
@@ -31,9 +31,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Credenciais inválidas" }, { status: 401 });
     }
 
-    const token = signToken({ sub: data.id, email: data.email, nome: data.nome, curso: (data as any).curso });
+    const ano_curso = (data as any).ano_turma;
+    const token = signToken({ sub: data.id, email: data.email, nome: data.nome, curso: (data as any).curso, ano_curso });
 
-    const response = NextResponse.json({ user: { id: data.id, nome: data.nome, email: data.email, curso: (data as any).curso } });
+    const response = NextResponse.json({ user: { id: data.id, nome: data.nome, email: data.email, curso: (data as any).curso, ano_curso } });
     
     response.cookies.set("auth-token", token, {
       httpOnly: true,

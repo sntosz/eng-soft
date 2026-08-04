@@ -82,7 +82,7 @@ const LoginPage = () => {
               Engenharia <span className="gold-text">de Software</span>
             </h1>
             <p className="text-sm text-muted-foreground italic">
-              "Código. Disciplina. Domínio."
+              &quot;Código. Disciplina. Domínio.&quot;
             </p>
           </div>
         </section>
