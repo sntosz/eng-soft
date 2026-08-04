@@ -2,6 +2,8 @@ import Image from "next/image";
 import { Home, CreditCard, ShoppingBag, Trophy, Calendar, Settings, User, LogOut } from "lucide-react";
 import logoSwe from "@/assets/logo-aaaes.png";
 import { NavLink } from "./NavLink";
+import { supabase } from "@/lib/supabase";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 const navItems = [
   { icon: Home, label: "Home", href: "/", active: true },
@@ -13,6 +15,7 @@ const navItems = [
 ];
 
 const DashboardSidebar = () => {
+  const { user } = useCurrentUser();
   return (
     <aside className="w-20 lg:w-64 min-h-screen bg-sidebar border-r border-sidebar-border flex flex-col items-center lg:items-stretch py-6 px-2 lg:px-4 shrink-0">
       {/* Logo */}
@@ -48,7 +51,7 @@ const DashboardSidebar = () => {
             <User className="w-4 h-4 text-primary" />
           </div>
           <div className="hidden lg:block">
-            <p className="text-sm font-medium text-foreground">Aluno</p>
+            <p className="text-sm font-medium text-foreground">{user?.nome || "Carregando..."}</p>
             <p className="text-xs text-muted-foreground">Engenharia de Software</p>
           </div>
         </div>

@@ -10,16 +10,44 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import logoAaaes from "@/assets/logo-aaaes.png";
 
+
 const LoginPage = () => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem("aaaes:isLoggedIn", "true");
-    router.push("/");
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json?.error || "Login failed");
+        setLoading(false);
+        return;
+      }
+
+      // save token and mark logged in
+      localStorage.setItem("aaaes:token", json.token);
+      localStorage.setItem("aaaes:isLoggedIn", "true");
+
+      router.push("/");
+    } catch (err: any) {
+      setError(err.message || String(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
