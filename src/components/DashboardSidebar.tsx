@@ -3,6 +3,7 @@ import {Home, CreditCard, ShoppingBag, Trophy, Calendar, Settings, User, LogOut}
 import logoSwe from "@/assets/logo-aaaes.png";
 import {NavLink} from "./NavLink";
 import {useCurrentUser} from "@/hooks/useCurrentUser";
+import { usePathname } from "next/navigation";
 
 const navItems = [
     {icon: Home, label: "Home", href: "/", active: true},

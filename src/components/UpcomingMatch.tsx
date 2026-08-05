@@ -15,10 +15,10 @@ const UpcomingMatch = () => {
       try {
         const now = new Date().toISOString();
         const { data, error } = await supabase
-          .from("matches")
+          .from("partidas")
           .select("*")
-          .gt("date", now)
-          .order("date", { ascending: true })
+          .gt("data_partida", now)
+          .order("data_partida", { ascending: true })
           .limit(1)
           .maybeSingle();
 
