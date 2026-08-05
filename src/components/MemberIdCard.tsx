@@ -3,22 +3,23 @@ import { useEffect, useState } from "react";
 import { Package, CheckCircle2, Clock } from "lucide-react";
 import logoSwe from "@/assets/logo-swe.png";
 import { supabase } from "@/lib/supabase";
+import { Order } from "@/types";
 
 const fallbackOrders = [
-  { name: "Engineering Hoodie", status: "Ready for Pickup", ready: true },
-  { name: "SWE Cap — Black Edition", status: "Processing", ready: false },
-  { name: "Athletic Shorts Pack", status: "Ready for Pickup", ready: true },
+  { nome: "Engineering Hoodie", status: "Ready for Pickup", pronto: true },
+  { nome: "SWE Cap — Black Edition", status: "Processing", pronto: false },
+  { nome: "Athletic Shorts Pack", status: "Ready for Pickup", pronto: true },
 ];
 
 const MemberIdCard = () => {
-  const [orders, setOrders] = useState(fallbackOrders);
+  const [orders, setOrders] = useState<Order[]>(fallbackOrders as any);
 
   useEffect(() => {
     let mounted = true;
 
     async function load() {
       try {
-        const { data, error } = await supabase.from("orders").select("name,status,ready").order("created_at", { ascending: false }).limit(5);
+        const { data, error } = await supabase.from("pedidos").select("nome,status,pronto").order("created_at", { ascending: false }).limit(5);
         if (error) throw error;
         if (mounted && data) {
           setOrders(data as any);
@@ -68,14 +69,14 @@ const MemberIdCard = () => {
             <h4 className="text-sm font-semibold text-foreground">Active Orders</h4>
           </div>
           <div className="space-y-2">
-            {orders.map((order: any) => (
+            {orders.map((order: Order) => (
               <div
-                key={order.name}
+                key={order.nome}
                 className="flex items-center justify-between px-4 py-3 rounded-lg bg-muted/50 border border-border"
               >
-                <span className="text-sm text-foreground">{order.name}</span>
-                <span className={`flex items-center gap-1.5 text-xs font-medium ${order.ready ? "text-primary" : "text-muted-foreground"}`}>
-                  {order.ready ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
+                <span className="text-sm text-foreground">{order.nome}</span>
+                <span className={`flex items-center gap-1.5 text-xs font-medium ${order.pronto ? "text-primary" : "text-muted-foreground"}`}>
+                  {order.pronto ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
                   {order.status}
                 </span>
               </div>

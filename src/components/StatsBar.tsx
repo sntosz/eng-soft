@@ -10,9 +10,9 @@ const StatsBar = () => {
 
     async function load() {
       try {
-        const { count: membersCount, error: mErr } = await supabase.from("members").select("*", { count: "exact", head: true });
-        const { count: ordersCount, error: oErr } = await supabase.from("orders").select("*", { count: "exact", head: true });
-        const { count: matchesCount, error: maErr } = await supabase.from("matches").select("*", { count: "exact", head: true });
+        const { count: membersCount, error: mErr } = await supabase.from("membros").select("*", { count: "exact", head: true });
+        const { count: ordersCount, error: oErr } = await supabase.from("pedidos").select("*", { count: "exact", head: true });
+        const { count: matchesCount, error: maErr } = await supabase.from("partidas").select("*", { count: "exact", head: true });
 
         if (mounted) {
           setStats((prev) => ({

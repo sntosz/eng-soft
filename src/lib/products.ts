@@ -1,17 +1,9 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { BUCKETS } from "@/lib/supabase";
+import { Product } from "@/types";
 
 export const PRODUCT_IMAGE_BUCKET = BUCKETS.PRODUTOS;
 
-export interface Product {
-  id: string;
-  nome: string;
-  descricao: string | null;
-  preco: number;
-  estoque: number;
-  imagem_url: string | null;
-  destaque: boolean;
-}
 
 export function mapProduct(row: any): Product {
   return {

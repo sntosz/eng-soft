@@ -8,15 +8,8 @@ import DashboardSidebar from "@/components/DashboardSidebar";
 import {Button} from "@/components/ui/button";
 import {MemberModal, MemberData} from "@/components/MemberModal";
 import {useCurrentUser} from "@/hooks/useCurrentUser";
+import { Member } from "@/types";
 
-interface Member {
-    id: string;
-    nome: string;
-    email: string;
-    curso: string;
-    ano_curso: string;
-    e_admin?: boolean;
-}
 
 const MembersPage = () => {
     const {user, loading: userLoading, isLoggedIn} = useCurrentUser();

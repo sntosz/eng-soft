@@ -4,9 +4,10 @@ import { Calendar, MapPin } from "lucide-react";
 import logoSwe from "@/assets/logo-swe.png";
 import logoLaw from "@/assets/logo-law.png";
 import { supabase } from "@/lib/supabase";
+import { Match } from "@/types";
 
 const UpcomingMatch = () => {
-  const [match, setMatch] = useState<any | null>(null);
+  const [match, setMatch] = useState<Match | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -37,10 +38,10 @@ const UpcomingMatch = () => {
     };
   }, []);
 
-  const home = match?.home_team || { short: "SWE", name: "Software Eng." };
-  const away = match?.away_team || { short: "LAW", name: "Law School" };
-  const dateLabel = match?.date ? new Date(match.date).toLocaleString() : "Apr 15, 2026 · 7:00 PM";
-  const location = match?.location || "Main Arena";
+  const home = match?.time_casa || { short: "SWE", name: "Software Eng." };
+  const away = match?.time_fora || { short: "LAW", name: "Law School" };
+  const dateLabel = match?.data_partida ? new Date(match.data_partida).toLocaleString() : "Apr 15, 2026 · 7:00 PM";
+  const location = match?.local || "Main Arena";
 
   return (
     <div className="bg-card border border-border rounded-xl p-6 space-y-4">
