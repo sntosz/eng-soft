@@ -3,11 +3,17 @@
 import { useEffect, useState } from "react";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import Image from "next/image";
-import { ShoppingBag, Package } from "lucide-react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { ProductModal } from "@/components/ProductModal";
+import { ShoppingBag, Package, Plus, Edit2, Trash2 } from "lucide-react";
 import { Product } from "@/types";
 import { supabase } from "@/lib/supabase";
 
 const StorePage = () => {
+  const { user } = useCurrentUser();
+  const isAdmin = user?.e_admin === true;
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -36,6 +42,31 @@ const StorePage = () => {
     loadProducts();
   }, []);
 
+  const handleCreate = () => { setSelectedProduct(null); setIsModalOpen(true); };
+  const handleEdit = (p: Product) => { setSelectedProduct(p); setIsModalOpen(true); };
+  const handleDelete = async (id: string) => {
+    if (!confirm("Tem certeza?")) return;
+    try {
+      const { error } = await supabase.from("produtos").delete().eq("id", id);
+      if (error) throw error;
+      setProducts(products.filter(p => p.id !== id));
+    } catch(err: any) { alert("Erro ao excluir: " + err.message); }
+  };
+  const handleSubmit = async (data: Partial<Product>) => {
+    try {
+      if (data.id) {
+        const { error } = await supabase.from("produtos").update(data).eq("id", data.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("produtos").insert([data]);
+        if (error) throw error;
+      }
+      setIsModalOpen(false);
+      const { data: res } = await supabase.from("produtos").select("*").order("destaque", { ascending: false }).order("nome", { ascending: true });
+      setProducts(res || []);
+    } catch(err: any) { alert("Erro ao salvar: " + err.message); }
+  };
+
   return (
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar />
@@ -54,6 +85,13 @@ const StorePage = () => {
         </header>
 
         <div className="p-6 max-w-7xl mx-auto">
+          {isAdmin && (
+            <div className="mb-6 flex justify-end">
+              <button onClick={handleCreate} className="gold-gradient text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 flex items-center gap-2">
+                <Plus className="w-4 h-4" /> Novo Produto
+              </button>
+            </div>
+          )}
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <p className="text-muted-foreground">Carregando produtos...</p>
@@ -122,12 +160,19 @@ const StorePage = () => {
                         Comprar
                       </button>
                     </div>
+                    {isAdmin && (
+                      <div className="mt-2 pt-2 border-t border-border flex gap-2">
+                        <button onClick={() => handleEdit(product)} className="flex-1 border px-2 py-1 rounded text-xs flex items-center justify-center gap-1 hover:bg-secondary"><Edit2 className="w-3 h-3"/> Editar</button>
+                        <button onClick={() => handleDelete(product.id)} className="flex-1 bg-destructive/10 text-destructive px-2 py-1 rounded text-xs flex items-center justify-center gap-1 hover:bg-destructive/20"><Trash2 className="w-3 h-3"/> Excluir</button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           )}
         </div>
+        <ProductModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleSubmit} initialData={selectedProduct || undefined} />
       </main>
     </div>
   );

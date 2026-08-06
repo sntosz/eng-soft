@@ -2,14 +2,20 @@
 
 import { useEffect, useState } from "react";
 import DashboardSidebar from "@/components/DashboardSidebar";
-import { Trophy, Calendar, MapPin, Clock } from "lucide-react";
+import { Trophy, Calendar, MapPin, Clock, Plus, Edit2, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import logoSwe from "@/assets/logo-swe.png";
 import logoLaw from "@/assets/logo-law.png";
 import { Match } from "@/types";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { MatchModal } from "@/components/MatchModal";
 
 const MatchesPage = () => {
+  const { user } = useCurrentUser();
+  const isAdmin = user?.e_admin === true;
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -37,6 +43,32 @@ const MatchesPage = () => {
 
     loadMatches();
   }, []);
+
+  const handleCreate = () => { setSelectedMatch(null); setIsModalOpen(true); };
+  const handleEdit = (m: Match) => { setSelectedMatch(m); setIsModalOpen(true); };
+  const handleDelete = async (id: string) => {
+    if (!confirm("Tem certeza?")) return;
+    try {
+      const { error } = await supabase.from("partidas").delete().eq("id", id);
+      if (error) throw error;
+      setMatches(matches.filter(m => m.id !== id));
+    } catch(err: any) { alert("Erro ao excluir: " + err.message); }
+  };
+  const handleSubmit = async (data: Partial<Match>) => {
+    try {
+      const formattedData = { ...data, data_partida: data.data_partida ? new Date(data.data_partida).toISOString() : new Date().toISOString() };
+      if (data.id) {
+        const { error } = await supabase.from("partidas").update(formattedData).eq("id", data.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("partidas").insert([formattedData]);
+        if (error) throw error;
+      }
+      setIsModalOpen(false);
+      const { data: res } = await supabase.from("partidas").select("*").order("data_partida", { ascending: true });
+      setMatches(res || []);
+    } catch(err: any) { alert("Erro ao salvar: " + err.message); }
+  };
 
   const now = new Date();
   const upcomingMatches = matches.filter(m => new Date(m.data_partida) >= now);
@@ -112,6 +144,12 @@ const MatchesPage = () => {
             <span className="text-xs text-muted-foreground text-center">{away.name}</span>
           </div>
         </div>
+        {isAdmin && (
+           <div className="mt-4 pt-4 border-t border-border flex gap-2 justify-end">
+             <button onClick={() => handleEdit(match)} className="border px-3 py-1 rounded text-xs flex items-center gap-1 hover:bg-secondary"><Edit2 className="w-3 h-3"/> Editar</button>
+             <button onClick={() => handleDelete(match.id)} className="bg-destructive/10 text-destructive px-3 py-1 rounded text-xs flex items-center gap-1 hover:bg-destructive/20"><Trash2 className="w-3 h-3"/> Excluir</button>
+           </div>
+        )}
       </div>
     );
   };
@@ -134,6 +172,13 @@ const MatchesPage = () => {
         </header>
 
         <div className="p-6 max-w-5xl mx-auto space-y-12">
+          {isAdmin && (
+            <div className="flex justify-end mb-4">
+              <button onClick={handleCreate} className="gold-gradient text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 flex items-center gap-2">
+                <Plus className="w-4 h-4" /> Nova Partida
+              </button>
+            </div>
+          )}
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <p className="text-muted-foreground">Carregando partidas...</p>
@@ -180,6 +225,7 @@ const MatchesPage = () => {
             </>
           )}
         </div>
+        <MatchModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleSubmit} initialData={selectedMatch || undefined} />
       </main>
     </div>
   );

@@ -2,13 +2,14 @@
 
 import {useCallback, useEffect, useState} from "react";
 import {useRouter} from "next/navigation";
-import {LogOut, Users, Mail, BookOpen, Plus, Edit2, ShieldAlert} from "lucide-react";
+import {LogOut, Users, Mail, BookOpen, Plus, Edit2, Trash2, ShieldAlert} from "lucide-react";
 import Link from "next/link";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import {Button} from "@/components/ui/button";
 import {MemberModal, MemberData} from "@/components/MemberModal";
 import {useCurrentUser} from "@/hooks/useCurrentUser";
 import { Member } from "@/types";
+import { supabase } from "@/lib/supabase";
 
 
 const MembersPage = () => {
@@ -70,6 +71,17 @@ const MembersPage = () => {
         setIsModalOpen(true);
     };
 
+    const handleDeleteMember = async (id: string) => {
+        if (!confirm("Tem certeza que deseja excluir este membro?")) return;
+        try {
+            const { error } = await supabase.from("membros").delete().eq("id", id);
+            if (error) throw error;
+            await fetchMembers();
+        } catch (err: any) {
+            console.error("Erro ao excluir:", err);
+            alert("Erro ao excluir membro.");
+        }
+    };
     const handleEditMember = (member: Member) => {
         setSelectedMember(member);
         setIsModalOpen(true);
@@ -265,6 +277,15 @@ const MembersPage = () => {
                                             >
                                                 <Edit2 className="w-4 h-4"/>
                                                 Editar
+                                            </Button>
+                                            <Button
+                                                onClick={() => handleDeleteMember(member.id)}
+                                                variant="destructive"
+                                                size="sm"
+                                                className="w-full gap-2 mt-2"
+                                            >
+                                                <Trash2 className="w-4 h-4"/>
+                                                Excluir
                                             </Button>
                                         </div>
                                     </div>

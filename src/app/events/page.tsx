@@ -3,11 +3,17 @@
 import { useEffect, useState } from "react";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import Image from "next/image";
-import { Calendar, MapPin, Clock, Users, Ticket } from "lucide-react";
+import { Calendar, MapPin, Clock, Users, Ticket, Plus, Edit2, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Event } from "@/types";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { EventModal } from "@/components/EventModal";
 
 const EventsPage = () => {
+  const { user } = useCurrentUser();
+  const isAdmin = user?.e_admin === true;
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -35,6 +41,32 @@ const EventsPage = () => {
 
     loadEvents();
   }, []);
+
+  const handleCreate = () => { setSelectedEvent(null); setIsModalOpen(true); };
+  const handleEdit = (e: Event) => { setSelectedEvent(e); setIsModalOpen(true); };
+  const handleDelete = async (id: string) => {
+    if (!confirm("Tem certeza?")) return;
+    try {
+      const { error } = await supabase.from("eventos").delete().eq("id", id);
+      if (error) throw error;
+      setEvents(events.filter(e => e.id !== id));
+    } catch(err: any) { alert("Erro ao excluir: " + err.message); }
+  };
+  const handleSubmit = async (data: Partial<Event>) => {
+    try {
+      const formattedData = { ...data, data_evento: data.data_evento ? new Date(data.data_evento).toISOString() : new Date().toISOString() };
+      if (data.id) {
+        const { error } = await supabase.from("eventos").update(formattedData).eq("id", data.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("eventos").insert([formattedData]);
+        if (error) throw error;
+      }
+      setIsModalOpen(false);
+      const { data: res } = await supabase.from("eventos").select("*").order("data_evento", { ascending: true });
+      setEvents(res || []);
+    } catch(err: any) { alert("Erro ao salvar: " + err.message); }
+  };
 
   const EventCard = ({ event }: { event: Event }) => {
     const date = new Date(event.data_evento);
@@ -100,6 +132,12 @@ const EventsPage = () => {
             </span>
           </div>
         </div>
+        {isAdmin && (
+          <div className="flex flex-col gap-2 p-4 md:border-l border-border bg-secondary/10 justify-center min-w-[120px]">
+             <button onClick={() => handleEdit(event)} className="w-full border px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-secondary bg-background"><Edit2 className="w-4 h-4"/> Editar</button>
+             <button onClick={() => handleDelete(event.id)} className="w-full bg-destructive/10 text-destructive px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-destructive/20"><Trash2 className="w-4 h-4"/> Excluir</button>
+          </div>
+        )}
       </div>
     );
   };
@@ -122,6 +160,13 @@ const EventsPage = () => {
         </header>
 
         <div className="p-6 max-w-5xl mx-auto">
+          {isAdmin && (
+            <div className="mb-6 flex justify-end">
+              <button onClick={handleCreate} className="gold-gradient text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 flex items-center gap-2">
+                <Plus className="w-4 h-4" /> Novo Evento
+              </button>
+            </div>
+          )}
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <p className="text-muted-foreground">Carregando eventos...</p>
@@ -146,6 +191,7 @@ const EventsPage = () => {
             </div>
           )}
         </div>
+        <EventModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleSubmit} initialData={selectedEvent || undefined} />
       </main>
     </div>
   );
