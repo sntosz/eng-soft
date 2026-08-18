@@ -39,13 +39,10 @@ export interface Team {
 
 export interface Match {
   id: string;
-  time_casa: Team;
-  time_fora: Team;
-  placar_casa?: number;
-  placar_fora?: number;
+  time_casa: string;
+  time_visitante: string;
   data_partida: string;
-  local?: string;
-  campeonato?: string;
+  local_partida?: string;
   created_at?: string;
 }
 

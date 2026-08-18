@@ -8,9 +8,9 @@ import { usePathname } from "next/navigation";
 const navItems = [
     {icon: Home, label: "Home", href: "/", active: true},
     {icon: CreditCard, label: "Membros", href: "/members", adminOnly: true},
-    {icon: ShoppingBag, label: "Loja", href: "/store"},
-    {icon: Trophy, label: "Partidas", href: "/matches"},
-    {icon: Calendar, label: "Eventos", href: "/events"},
+    {icon: ShoppingBag, label: "Loja", href: "/store", adminOnly: true},
+    {icon: Trophy, label: "Partidas", href: "/matches", adminOnly: true},
+    {icon: Calendar, label: "Eventos", href: "/events", adminOnly: true},
     {icon: Settings, label: "Configurações", href: "/settings"},
 ];
 

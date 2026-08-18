@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Calendar, MapPin } from "lucide-react";
+import logoAaes from "@/assets/logo-aaaes.png";
 import logoSwe from "@/assets/logo-swe.png";
 import logoLaw from "@/assets/logo-law.png";
 import { supabase } from "@/lib/supabase";
@@ -39,24 +40,21 @@ const UpcomingMatch = () => {
   }, []);
 
   const home = match?.time_casa || { short: "SWE", name: "Software Eng." };
-  const away = match?.time_fora || { short: "LAW", name: "Law School" };
-  const dateLabel = match?.data_partida ? new Date(match.data_partida).toLocaleString() : "Apr 15, 2026 · 7:00 PM";
-  const location = match?.local || "Main Arena";
+  const away = match?.time_visitante || { short: "LAW", name: "Law School" };
+  const dateLabel = match?.data_partida ? new Date(match.data_partida).toLocaleString() : "A definir";
+  const location = match?.local_partida || "a definir";
 
   return (
     <div className="bg-card border border-border rounded-xl p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h4 className="font-display font-bold text-foreground">Upcoming Match</h4>
-        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider gold-gradient text-primary-foreground">
-          Rivalry
-        </span>
+        <h4 className="font-display font-bold text-foreground">Próxima Partida</h4>
       </div>
 
       {/* Teams */}
       <div className="flex items-center justify-between py-4">
         <div className="flex flex-col items-center gap-2 flex-1">
           <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center p-2 border-2 border-primary/30">
-            <Image src={logoSwe} alt={home.name} width={48} height={48} />
+            <Image src={logoAaes} alt={home.name} width={48} height={48} />
           </div>
           <span className="text-sm font-semibold text-foreground">{home.short}</span>
           <span className="text-xs text-muted-foreground">{home.name}</span>

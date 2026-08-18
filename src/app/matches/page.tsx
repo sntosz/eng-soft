@@ -76,7 +76,7 @@ const MatchesPage = () => {
 
   const MatchCard = ({ match, isPast }: { match: Match, isPast: boolean }) => {
     const home = match.time_casa || { short: "SWE", name: "Software Eng." };
-    const away = match.time_fora || { short: "ADV", name: "Direito" };
+    const away = match.time_visitante || { short: "ADV", name: "Direito" };
     const date = new Date(match.data_partida);
 
     return (
@@ -93,7 +93,7 @@ const MatchesPage = () => {
             </span>
             <span className="flex items-center gap-1.5">
               <MapPin className="w-4 h-4 text-primary" />
-              {match.local || "Arena Principal"}
+              {match.local_partida || "Arena Principal"}
             </span>
           </div>
 
@@ -113,27 +113,18 @@ const MatchesPage = () => {
             <div className={`w-20 h-20 rounded-full flex items-center justify-center p-3 border-2 ${(match.placar_casa ?? 0) > (match.placar_fora ?? 0) ? 'border-primary' : 'border-border'} bg-muted`}>
                <Image src={logoSwe} alt={home.name} width={64} height={64} className="object-contain" />
             </div>
-            <span className="font-display font-bold text-lg mt-2">{home.short}</span>
-            <span className="text-xs text-muted-foreground text-center">{home.name}</span>
+            <span className="font-display font-bold text-lg mt-2">{match.time_casa?.short}</span>
+            <span className="text-xs text-muted-foreground text-center">{match.time_casa?.name}</span>
           </div>
 
           <div className="flex flex-col items-center gap-2 px-8">
             {isPast ? (
               <div className="flex items-center gap-4">
-                <span className={`font-display text-4xl font-bold ${(match.placar_casa ?? 0) > (match.placar_fora ?? 0) ? 'text-primary' : 'text-foreground'}`}>
-                  {match.placar_casa || 0}
-                </span>
                 <span className="text-muted-foreground text-xl">-</span>
-                <span className={`font-display text-4xl font-bold ${(match.placar_fora ?? 0) > (match.placar_casa ?? 0) ? 'text-primary' : 'text-foreground'}`}>
-                  {match.placar_fora || 0}
-                </span>
               </div>
             ) : (
               <span className="font-display text-4xl font-bold text-primary">VS</span>
             )}
-            <span className="text-xs text-muted-foreground uppercase tracking-widest mt-2">
-              {match.campeonato || "Amistoso"}
-            </span>
           </div>
 
           <div className="flex flex-col items-center gap-2 flex-1">
