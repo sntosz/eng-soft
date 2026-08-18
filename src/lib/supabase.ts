@@ -6,7 +6,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const BUCKETS = {
-  PRODUTOS: "produtos",
-  PARTIDAS: "partidas",
-  NOTICIAS: "noticias",
+  PRODUTOS: "PRODUCT_IMAGE_BUCKET",
+  PARTIDAS: "PublicImages_Matchs",
+  NOTICIAS: "noticias"
 } as const;

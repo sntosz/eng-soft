@@ -44,6 +44,9 @@ export interface Match {
   data_partida: string;
   local_partida?: string;
   created_at?: string;
+  vitoria_atletica: boolean;
+  foto_casa: string;
+  foto_visitante: string;
 }
 
 export interface Order {
