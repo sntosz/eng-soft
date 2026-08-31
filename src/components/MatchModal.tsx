@@ -135,7 +135,6 @@ export function MatchModal({ isOpen, onClose, onSubmit, initialData }: MatchForm
           </div>
 
           <div className="p-4 overflow-y-auto space-y-4">
-            {/* Time Casa */}
             <div className="p-3 border border-border rounded-lg space-y-2">
               <label className="text-sm font-medium block text-primary">Time da Casa</label>
               <input
@@ -169,7 +168,6 @@ export function MatchModal({ isOpen, onClose, onSubmit, initialData }: MatchForm
               </div>
             </div>
 
-            {/* Time Visitante */}
             <div className="p-3 border border-border rounded-lg space-y-2">
               <label className="text-sm font-medium block text-destructive">Time Visitante</label>
               <input
@@ -203,7 +201,6 @@ export function MatchModal({ isOpen, onClose, onSubmit, initialData }: MatchForm
               </div>
             </div>
 
-            {/* Detalhes */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium mb-1 block">Data e Hora</label>
@@ -227,7 +224,6 @@ export function MatchModal({ isOpen, onClose, onSubmit, initialData }: MatchForm
               </div>
             </div>
 
-            {/* Vencedor */}
             <div className="border-t border-border pt-4">
               <label className="flex items-center gap-3 cursor-pointer select-none">
                 <input

@@ -147,12 +147,12 @@ const LoginPage = () => {
                                     <Label htmlFor="password" className="text-foreground/80">
                                         Senha
                                     </Label>
-                                    <a
-                                        href="#"
+                                    <Link
+                                        href="/forgot-password"
                                         className="text-xs text-primary hover:underline font-medium"
                                     >
                                         Esqueceu a senha?
-                                    </a>
+                                    </Link>
                                 </div>
                                 <div className="relative">
                                     <Lock

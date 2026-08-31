@@ -74,7 +74,6 @@ const UpcomingMatch = () => {
           <h4 className="font-display font-bold text-foreground">Próxima Partida</h4>
         </div>
 
-        {/* Teams */}
         <div className="flex items-center justify-between py-4">
           <div className="flex flex-col items-center gap-2 flex-1">
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center p-2 border-2 border-primary/30">
@@ -96,7 +95,6 @@ const UpcomingMatch = () => {
           </div>
         </div>
 
-        {/* Details */}
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <Calendar className="w-3.5 h-3.5 text-primary" />

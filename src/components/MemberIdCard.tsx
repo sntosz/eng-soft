@@ -37,7 +37,6 @@ const MemberIdCard = () => {
 
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden card-glow animate-pulse-gold">
-      {/* Header band */}
       <div className="gold-gradient px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Image src={logoSwe} alt="SWE" width={32} height={32} />
@@ -47,7 +46,6 @@ const MemberIdCard = () => {
         </div>
       </div>
 
-      {/* Body */}
       <div className="p-6 space-y-5">
         <div>
           <h3 className="font-display text-2xl font-bold text-foreground">Alex Chen</h3>
@@ -62,7 +60,6 @@ const MemberIdCard = () => {
           </div>
         </div>
 
-        {/* Orders */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Package className="w-4 h-4 text-primary" />
