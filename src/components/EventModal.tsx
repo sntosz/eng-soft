@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Event } from "@/types";
+import { isValidImageUrl } from "@/lib/utils";
 
 interface EventFormProps {
   isOpen: boolean;
@@ -35,6 +36,24 @@ export function EventModal({ isOpen, onClose, onSubmit, initialData }: EventForm
       });
     }
   }, [initialData, isOpen]);
+
+  const handleSave = async () => {
+    if (!formData.nome?.trim()) {
+      alert("Por favor, preencha o nome do evento.");
+      return;
+    }
+
+    const trimmedUrl = formData.imagem_url?.trim() || "";
+    if (trimmedUrl && !isValidImageUrl(trimmedUrl)) {
+      alert("Por favor, insira uma URL válida para a imagem (começando com http:// ou https://) ou deixe o campo em branco.");
+      return;
+    }
+
+    await onSubmit({
+      ...formData,
+      imagem_url: trimmedUrl,
+    });
+  };
 
   if (!isOpen) return null;
 
@@ -101,6 +120,7 @@ export function EventModal({ isOpen, onClose, onSubmit, initialData }: EventForm
             <label className="text-sm font-medium mb-1 block">URL da Imagem</label>
             <input
               type="text"
+              placeholder="https://exemplo.com/imagem.jpg"
               value={formData.imagem_url || ""}
               onChange={(e) => setFormData({ ...formData, imagem_url: e.target.value })}
               className="w-full px-3 py-2 rounded-md border bg-secondary/50"
@@ -109,7 +129,7 @@ export function EventModal({ isOpen, onClose, onSubmit, initialData }: EventForm
         </div>
         <div className="p-4 border-t border-border flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={() => onSubmit(formData)} className="gold-gradient text-primary-foreground">
+          <Button onClick={handleSave} className="gold-gradient text-primary-foreground">
             Salvar
           </Button>
         </div>

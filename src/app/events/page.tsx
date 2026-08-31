@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { Event } from "@/types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { EventModal } from "@/components/EventModal";
+import { isValidImageUrl } from "@/lib/utils";
 
 const EventsPage = () => {
   const { user } = useCurrentUser();
@@ -72,13 +73,16 @@ const EventsPage = () => {
     const date = new Date(event.data_evento);
     const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
+    const hasValidImage = isValidImageUrl(event.imagem_url);
+
     return (
       <div className="bg-card border border-border rounded-xl overflow-hidden group card-glow flex flex-col md:flex-row transition-all hover:border-primary/50">
         <div className="md:w-64 h-48 md:h-auto bg-muted relative overflow-hidden shrink-0">
-          {event.imagem_url ? (
+          {hasValidImage ? (
             <Image width={600} height={400}
               src={event.imagem_url}
               alt={event.nome}
+              unoptimized
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
           ) : (

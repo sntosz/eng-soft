@@ -8,6 +8,7 @@ import {ProductModal} from "@/components/ProductModal";
 import {ShoppingBag, Package, Plus, Edit2, Trash2} from "lucide-react";
 import {Product} from "@/types";
 import {supabase} from "@/lib/supabase";
+import {isValidImageUrl} from "@/lib/utils";
 
 export default function StorePage() {
     const {user} = useCurrentUser();
@@ -145,9 +146,9 @@ export default function StorePage() {
                                     >
                                         <div
                                             className="h-52 bg-white relative flex items-center justify-center overflow-hidden border-b border-border/50">
-                                            {product.imagem_url ? (
+                                            {isValidImageUrl(product.imagem_url) ? (
                                                 <Image
-                                                    src={product.imagem_url}
+                                                    src={product.imagem_url!}
                                                     alt={product.nome || "Produto"}
                                                     fill
                                                     unoptimized

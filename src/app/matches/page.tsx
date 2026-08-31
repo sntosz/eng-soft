@@ -10,6 +10,7 @@ import logoLaw from "@/assets/logo-law.png";
 import { Match } from "@/types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { MatchModal } from "@/components/MatchModal";
+import { isValidImageUrl } from "@/lib/utils";
 
 const MatchesPage = () => {
   const { user } = useCurrentUser();
@@ -155,10 +156,11 @@ const MatchesPage = () => {
                   }`}
               >
                 <Image
-                    src={match.foto_casa || logoSwe}
+                    src={isValidImageUrl(match.foto_casa) ? match.foto_casa : logoSwe}
                     alt={home}
                     width={64}
                     height={64}
+                    unoptimized={isValidImageUrl(match.foto_casa)}
                     className="object-contain w-full h-full"
                 />
               </div>
@@ -192,10 +194,11 @@ const MatchesPage = () => {
                   }`}
               >
                 <Image
-                    src={match.foto_visitante || logoLaw}
+                    src={isValidImageUrl(match.foto_visitante) ? match.foto_visitante : logoLaw}
                     alt={away}
                     width={64}
                     height={64}
+                    unoptimized={isValidImageUrl(match.foto_visitante)}
                     className="object-contain w-full h-full"
                 />
               </div>

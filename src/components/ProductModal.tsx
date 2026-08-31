@@ -5,6 +5,7 @@ import { Upload, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/types";
 import { uploadImage } from "@/lib/upload";
+import { isValidImageUrl } from "@/lib/utils";
 
 interface ProductFormProps {
     isOpen: boolean;
@@ -58,7 +59,7 @@ export function ProductModal({ isOpen, onClose, onSubmit, initialData }: Product
 
             const payload: Partial<Product> = {
                 ...formData,
-                imagem_url: finalImageUrl || null,
+                imagem_url: isValidImageUrl(finalImageUrl) ? finalImageUrl : null,
             };
 
             await onSubmit(payload);

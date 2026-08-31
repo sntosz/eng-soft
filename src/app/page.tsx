@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { LogIn, LogOut } from "lucide-react";
 import DashboardSidebar from "@/components/DashboardSidebar";
@@ -12,13 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 const HomePage = () => {
-  const { user, isLoggedIn } = useCurrentUser();
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
-  };
+  const { user, isLoggedIn, logout } = useCurrentUser();
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -27,7 +20,7 @@ const HomePage = () => {
       <main className="flex-1 overflow-y-auto">
         <header className="sticky top-0 z-10 surface-glass border-b border-border px-6 py-4 flex items-center justify-between">
           <div>
-            { isLoggedIn ? (
+            { isLoggedIn && user ? (
               <h1 className="font-display text-xl font-bold text-foreground">
                 Bem-vindo de volta, <span className="gold-text">{user.nome}</span>
               </h1>) : (
@@ -45,7 +38,7 @@ const HomePage = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleLogout}
+                  onClick={logout}
                   className="gap-2 text-muted-foreground hover:text-foreground border"
                   aria-label="Sair"
                 >

@@ -24,7 +24,6 @@ import {
   CheckCircle,
   AlertCircle
 } from "lucide-react"
-import { useTheme } from "next-themes"
 
 interface SettingsState {
   profile: {
@@ -55,7 +54,6 @@ interface SettingsState {
 }
 
 export default function SettingsPage() {
-  const { theme, setTheme } = useTheme()
   const { toast } = useToast()
   const [isSaving, setIsSaving] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -67,7 +65,7 @@ export default function SettingsPage() {
       position: ""
     },
     appearance: {
-      theme: theme || "system",
+      theme: "dark",
       animations: true,
       compactMode: false
     },
@@ -104,11 +102,6 @@ export default function SettingsPage() {
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000))
-
-      // Update theme if changed
-      if (settings.appearance.theme !== theme) {
-        setTheme(settings.appearance.theme)
-      }
 
       setHasUnsavedChanges(false)
       toast({

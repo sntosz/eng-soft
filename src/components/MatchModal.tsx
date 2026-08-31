@@ -5,6 +5,7 @@ import { X, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Match } from "@/types";
 import { uploadImage } from "@/lib/upload";
+import { isValidImageUrl } from "@/lib/utils";
 
 interface MatchFormProps {
   isOpen: boolean;
@@ -101,8 +102,8 @@ export function MatchModal({ isOpen, onClose, onSubmit, initialData }: MatchForm
         data_partida: new Date(formData.data_partida).toISOString(),
         local_partida: formData.local_partida.trim(),
         vitoria_atletica: formData.vitoria_atletica,
-        foto_casa: urlCasa,
-        foto_visitante: urlVisitante,
+        foto_casa: isValidImageUrl(urlCasa) ? urlCasa : "",
+        foto_visitante: isValidImageUrl(urlVisitante) ? urlVisitante : "",
       };
 
       await onSubmit(payload);
