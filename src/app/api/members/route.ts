@@ -32,3 +32,28 @@ export async function GET() {
     return NextResponse.json({ error: err.message || "Erro ao buscar membros" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const { response } = await requireAdmin();
+    if (response) return response;
+
+    const body = await req.json().catch(() => ({}));
+    const { id } = body || {};
+
+    if (!id) {
+      return NextResponse.json({ error: "ID do membro obrigatório" }, { status: 400 });
+    }
+
+    const { error } = await supabaseAdmin.from("membros").delete().eq("id", id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error("Error deleting member:", err);
+    return NextResponse.json({ error: err.message || "Erro ao excluir membro" }, { status: 500 });
+  }
+}

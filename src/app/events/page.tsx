@@ -9,6 +9,7 @@ import { Event } from "@/types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { EventModal } from "@/components/EventModal";
 import { isValidImageUrl } from "@/lib/utils";
+import { toast } from "@/components/ui/sonner";
 
 const EventsPage = () => {
   const { user } = useCurrentUser();
@@ -46,12 +47,21 @@ const EventsPage = () => {
   const handleCreate = () => { setSelectedEvent(null); setIsModalOpen(true); };
   const handleEdit = (e: Event) => { setSelectedEvent(e); setIsModalOpen(true); };
   const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza?")) return;
-    try {
-      const { error } = await supabase.from("eventos").delete().eq("id", id);
-      if (error) throw error;
-      setEvents(events.filter(e => e.id !== id));
-    } catch(err: any) { alert("Erro ao excluir: " + err.message); }
+    toast("Excluir este evento?", {
+      action: {
+        label: "Excluir",
+        onClick: async () => {
+          try {
+            const { error } = await supabase.from("eventos").delete().eq("id", id);
+            if (error) throw error;
+            setEvents((prev) => prev.filter((e) => e.id !== id));
+            toast.success("Evento removido com sucesso.");
+          } catch (err: any) {
+            toast.error(err.message || "Erro ao excluir evento");
+          }
+        },
+      },
+    });
   };
   const handleSubmit = async (data: Partial<Event>) => {
     try {
@@ -66,7 +76,8 @@ const EventsPage = () => {
       setIsModalOpen(false);
       const { data: res } = await supabase.from("eventos").select("*").order("data_evento", { ascending: true });
       setEvents(res || []);
-    } catch(err: any) { alert("Erro ao salvar: " + err.message); }
+      toast.success(data.id ? "Evento atualizado." : "Evento criado com sucesso.");
+    } catch(err: any) { toast.error(err.message || "Erro ao salvar evento"); }
   };
 
   const EventCard = ({ event }: { event: Event }) => {
@@ -129,7 +140,15 @@ const EventsPage = () => {
               <span className="truncate">{event.local || "Local a definir"}</span>
             </span>
             <span className="flex items-center gap-2 md:col-span-2 mt-4">
-              <button className="gold-gradient text-primary-foreground px-6 py-2 rounded-lg font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity w-full sm:w-auto justify-center">
+              <button
+                type="button"
+                onClick={() => {
+                  toast.info("Solicitação registrada", {
+                    description: "Fale com a atlética para confirmar a sua reserva de ingresso.",
+                  });
+                }}
+                className="gold-gradient text-primary-foreground px-6 py-2 rounded-lg font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity w-full sm:w-auto justify-center"
+              >
                 <Ticket className="w-4 h-4" />
                 Garantir Ingresso
               </button>

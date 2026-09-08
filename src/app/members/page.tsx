@@ -9,8 +9,7 @@ import {Button} from "@/components/ui/button";
 import {MemberModal, MemberData} from "@/components/MemberModal";
 import {useCurrentUser} from "@/hooks/useCurrentUser";
 import { Member } from "@/types";
-import { supabase } from "@/lib/supabase";
-
+import { toast } from "@/components/ui/sonner";
 
 const MembersPage = () => {
     const {user, loading: userLoading, isLoggedIn} = useCurrentUser();
@@ -72,15 +71,31 @@ const MembersPage = () => {
     };
 
     const handleDeleteMember = async (id: string) => {
-        if (!confirm("Tem certeza que deseja excluir este membro?")) return;
-        try {
-            const { error } = await supabase.from("membros").delete().eq("id", id);
-            if (error) throw error;
-            await fetchMembers();
-        } catch (err: any) {
-            console.error("Erro ao excluir:", err);
-            alert("Erro ao excluir membro.");
-        }
+        toast("Excluir este membro?", {
+            action: {
+                label: "Excluir",
+                onClick: async () => {
+                    try {
+                        const res = await fetch("/api/members", {
+                            method: "DELETE",
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify({ id }),
+                        });
+
+                        const payload = await res.json().catch(() => ({}));
+                        if (!res.ok) {
+                            throw new Error(payload.error || "Erro ao excluir membro");
+                        }
+
+                        await fetchMembers();
+                        toast.success("Membro removido com sucesso.");
+                    } catch (err: any) {
+                        console.error("Erro ao excluir:", err);
+                        toast.error(err.message || "Erro ao excluir membro.");
+                    }
+                },
+            },
+        });
     };
     const handleEditMember = (member: Member) => {
         setSelectedMember(member);
