@@ -27,18 +27,31 @@ const MemberIdCard = () => {
         setLoadingOrders(true);
         const { data, error } = await supabase
           .from("pedidos")
-          .select("id,membro_id,nome,status,pronto,created_at")
+          .select(`
+            id,
+            membro_id,
+            status_pedido,
+            total,
+            criado_em,
+            itens_pedido (
+              quantidade,
+              preco_unitario,
+              produtos (
+                nome
+              )
+            )
+          `)
           .eq("membro_id", user.id)
-          .order("created_at", { ascending: false })
+          .order("criado_em", { ascending: false })
           .limit(5);
 
         if (error) {
-          console.error("Erro ao buscar pedidos do membro:", error);
+          console.error("Erro ao buscar pedidos do membro:", error.message || error);
           return;
         }
 
         if (mounted && data) {
-          setOrders(data as Order[]);
+          setOrders(data as unknown as Order[]);
         }
       } catch (err) {
         console.error("Falha ao carregar pedidos:", err);
@@ -175,28 +188,72 @@ const MemberIdCard = () => {
             </div>
           ) : (
             <div className="space-y-2">
-              {orders.map((order: Order) => (
-                <div
-                  key={order.id || order.nome}
-                  className="flex items-center justify-between px-4 py-3 rounded-lg bg-muted/50 border border-border"
-                >
-                  <span className="text-sm text-foreground font-medium">{order.nome}</span>
-                  <span
-                    className={`flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${
-                      order.pronto
-                        ? "bg-emerald-500/15 text-emerald-500 border border-emerald-500/20"
-                        : "bg-secondary text-muted-foreground"
-                    }`}
+              {orders.map((order: Order) => {
+                const orderProductName =
+                  order.itens_pedido && order.itens_pedido.length > 0
+                    ? order.itens_pedido
+                        .map((it) => {
+                          const prod = Array.isArray(it.produtos)
+                            ? it.produtos[0]
+                            : it.produtos;
+                          return `${prod?.nome || "Item"}${
+                            it.quantidade > 1 ? ` (x${it.quantidade})` : ""
+                          }`;
+                        })
+                        .join(", ")
+                    : order.nome || `Pedido #${order.id.slice(0, 6).toUpperCase()}`;
+
+                const isReady =
+                  order.pronto ||
+                  order.status_pedido === "pronto" ||
+                  order.status_pedido === "entregue" ||
+                  order.status_pedido === "concluido";
+
+                const statusText =
+                  order.status ||
+                  (order.status_pedido === "pronto"
+                    ? "Pronto para Retirada"
+                    : order.status_pedido === "entregue"
+                    ? "Entregue"
+                    : order.status_pedido === "cancelado"
+                    ? "Cancelado"
+                    : "Em Preparação");
+
+                return (
+                  <div
+                    key={order.id}
+                    className="flex items-center justify-between px-4 py-3 rounded-lg bg-muted/50 border border-border"
                   >
-                    {order.pronto ? (
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                    ) : (
-                      <Clock className="w-3.5 h-3.5" />
-                    )}
-                    {order.status || (order.pronto ? "Pronto para Retirada" : "Em Preparação")}
-                  </span>
-                </div>
-              ))}
+                    <div className="flex flex-col max-w-[65%]">
+                      <span className="text-sm text-foreground font-medium truncate">
+                        {orderProductName}
+                      </span>
+                      {order.total != null && (
+                        <span className="text-[11px] text-muted-foreground">
+                          {Number(order.total).toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}
+                        </span>
+                      )}
+                    </div>
+                    <span
+                      className={`flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${
+                        isReady
+                          ? "bg-emerald-500/15 text-emerald-500 border border-emerald-500/20"
+                          : "bg-secondary text-muted-foreground"
+                      }`}
+                    >
+                      {isReady ? (
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      ) : (
+                        <Clock className="w-3.5 h-3.5" />
+                      )}
+                      {statusText}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

@@ -49,11 +49,27 @@ export interface Match {
   foto_visitante: string;
 }
 
+export interface OrderItem {
+  id?: string;
+  pedido_id?: string;
+  produto_id?: string;
+  quantidade: number;
+  preco_unitario: number;
+  produtos?: {
+    nome: string;
+  } | { nome: string }[] | null;
+}
+
 export interface Order {
   id: string;
   membro_id?: string;
-  nome: string;
-  status: string;
-  pronto: boolean;
+  status_pedido?: string;
+  total?: number;
+  criado_em?: string;
+  nome?: string;
+  status?: string;
+  pronto?: boolean;
   created_at?: string;
+  itens_pedido?: OrderItem[];
 }
+
