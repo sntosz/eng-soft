@@ -25,6 +25,7 @@ export async function POST(req: Request) {
         bucketName = BUCKETS.PRODUTOS;
         break;
       case "partida":
+      case "evento":
         bucketName = BUCKETS.PARTIDAS;
         break;
       case "noticia":

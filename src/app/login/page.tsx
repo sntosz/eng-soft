@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff, Lock, Mail, ShieldCheck, AlertCircle, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, ShieldCheck, AlertCircle, Loader2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -220,6 +220,16 @@ const LoginPage = () => {
                 )}
               </Button>
             </form>
+
+            <div className="mt-6 pt-6 border-t border-border text-center">
+              <p className="text-xs text-muted-foreground">
+                Ainda não é membro da Atlética?{" "}
+                <Link href="/register" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">
+                  <UserPlus className="w-3.5 h-3.5" />
+                  Cadastre-se aqui
+                </Link>
+              </p>
+            </div>
           </div>
 
           <p className="text-center text-xs text-muted-foreground mt-6">

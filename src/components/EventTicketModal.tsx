@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { X, Minus, Plus, Ticket, CheckCircle2, AlertCircle, Loader2, MapPin, User as UserIcon, QrCode, Copy, Check, Calendar } from "lucide-react";
+import { X, Minus, Plus, Ticket, CheckCircle2, AlertCircle, Loader2, MapPin, User as UserIcon, QrCode, Copy, Check, Calendar, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Event } from "@/types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -28,6 +28,7 @@ export function EventTicketModal({
   const [copied, setCopied] = useState(false);
 
   const pixKey = "atletica.engsoft@unigran.br";
+  const whatsappNumber = "5567999999999"; // Número da Atlética
 
   useEffect(() => {
     if (isOpen) {
@@ -73,7 +74,6 @@ export function EventTicketModal({
       setError(null);
 
       // Simulação de registro / envio do pedido de ingresso
-      // Pode ser expandido em tabela de ingressos se necessário
       await new Promise((resolve) => setTimeout(resolve, 600));
 
       setSuccess(true);
@@ -92,6 +92,18 @@ export function EventTicketModal({
     hour: "2-digit",
     minute: "2-digit",
   });
+
+  // Mensagem formatada do WhatsApp para ingressos
+  const whatsappMessage = encodeURIComponent(
+    `Olá! Reservei ingressos para o evento da Atlética:\n\n` +
+    `👤 *Cliente:* ${user?.nome || "Membro"}\n` +
+    `🎉 *Evento:* ${event.nome}\n` +
+    `🎟️ *Quantidade:* ${quantity} ingresso(s)\n` +
+    `💰 *Valor Total:* ${isGratuito ? "Gratuito" : valorTotal}\n` +
+    (!isGratuito ? `🔑 *Chave Pix:* ${pixKey}\n\nSegue em anexo o meu comprovante de pagamento.` : "")
+  );
+
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -123,7 +135,7 @@ export function EventTicketModal({
               </div>
               <div>
                 <h3 className="text-xl font-bold font-display text-foreground">
-                  Ingresso Reservado com Sucesso!
+                  Ingresso Reservado!
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   Sua reserva para <strong className="text-foreground">{quantity}x {event.nome}</strong> foi confirmada.
@@ -134,53 +146,84 @@ export function EventTicketModal({
                 <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 text-left space-y-3">
                   <div className="flex items-center gap-2 font-semibold text-sm text-primary">
                     <QrCode className="w-4 h-4" />
-                    <span>Pagamento via Pix</span>
+                    <span>Dados do Pagamento Pix</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Para validar seus ingressos, faça o Pix de <strong className="text-foreground">{valorTotal}</strong> para a chave abaixo:
-                  </p>
-                  <div className="flex items-center justify-between bg-background border border-border p-2.5 rounded-lg">
-                    <span className="text-xs font-mono text-foreground font-semibold truncate mr-2">
-                      {pixKey}
-                    </span>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleCopyPix}
-                      className="h-7 px-2.5 text-xs flex items-center gap-1 shrink-0"
-                    >
-                      {copied ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-emerald-500" />
-                          <span className="text-emerald-500">Copiado</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5" />
-                          <span>Copiar</span>
-                        </>
-                      )}
-                    </Button>
+
+                  <div className="space-y-1 text-xs text-muted-foreground border-b border-primary/20 pb-2">
+                    <p className="flex justify-between">
+                      <span>Ingressos:</span>
+                      <strong className="text-foreground">{quantity} un.</strong>
+                    </p>
+                    <p className="flex justify-between">
+                      <span>Valor Total:</span>
+                      <strong className="text-primary text-sm font-bold">{valorTotal}</strong>
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1.5">
+                      Chave Pix (E-mail):
+                    </p>
+                    <div className="flex items-center justify-between bg-background border border-border p-2.5 rounded-lg">
+                      <span className="text-xs font-mono text-foreground font-semibold truncate mr-2">
+                        {pixKey}
+                      </span>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleCopyPix}
+                        className="h-7 px-2.5 text-xs flex items-center gap-1 shrink-0"
+                      >
+                        {copied ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-500" />
+                            <span className="text-emerald-500">Copiado</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>Copiar</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
 
-              <div className="p-4 rounded-xl bg-muted/40 border border-border text-left space-y-2 text-xs text-muted-foreground">
-                <p className="flex items-center gap-2 font-medium text-foreground">
-                  <MapPin className="w-4 h-4 text-primary" /> Entrada do Evento
+              {/* Redirecionamento para o WhatsApp */}
+              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-left space-y-2">
+                <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                  <MessageSquare className="w-4 h-4" />
+                  {!isGratuito ? "Envie o Comprovante no WhatsApp" : "Confirmar via WhatsApp"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {!isGratuito
+                    ? "Envie o comprovante do Pix para a Atlética para validar a emissão do seu ingresso."
+                    : "Notifique a diretoria pelo WhatsApp para confirmar a sua presença no evento."}
+                </p>
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors shadow-md inline-flex"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Mandar no WhatsApp da Atlética
+                </a>
+              </div>
+
+              <div className="p-3 rounded-xl bg-muted/40 border border-border text-left space-y-1 text-xs text-muted-foreground">
+                <p className="flex items-center gap-1.5 font-medium text-foreground">
+                  <MapPin className="w-3.5 h-3.5 text-primary" /> Entrada do Evento
                 </p>
                 <p>
-                  Apresente sua Carteirinha Digital de Membro {!isGratuito && "e o comprovante do Pix"} na portaria do evento.
+                  Apresente sua Carteirinha Digital de Membro na portaria no dia do evento.
                 </p>
               </div>
 
               <div className="pt-2 flex flex-col gap-2">
-                <Button asChild className="w-full gold-gradient text-primary-foreground font-semibold">
-                  <Link href="/">
-                    Ver Carteirinha Digital
-                  </Link>
-                </Button>
                 <Button variant="outline" onClick={onClose} className="w-full">
                   Fechar
                 </Button>
