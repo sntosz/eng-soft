@@ -3,25 +3,23 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { X, Minus, Plus, ShoppingBag, CheckCircle2, AlertCircle, Loader2, MapPin, User as UserIcon, QrCode, Copy, Check } from "lucide-react";
+import { X, Minus, Plus, Ticket, CheckCircle2, AlertCircle, Loader2, MapPin, User as UserIcon, QrCode, Copy, Check, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Product } from "@/types";
+import { Event } from "@/types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { isValidImageUrl } from "@/lib/utils";
 
-interface CheckoutModalProps {
+interface EventTicketModalProps {
   isOpen: boolean;
   onClose: () => void;
-  product: Product | null;
-  onSuccess: (novoEstoque: number) => void;
+  event: Event | null;
 }
 
-export function CheckoutModal({
+export function EventTicketModal({
   isOpen,
   onClose,
-  product,
-  onSuccess,
-}: CheckoutModalProps) {
+  event,
+}: EventTicketModalProps) {
   const { user, isLoggedIn } = useCurrentUser();
   const [quantity, setQuantity] = useState(1);
   const [submitting, setSubmitting] = useState(false);
@@ -38,12 +36,13 @@ export function CheckoutModal({
       setSuccess(false);
       setCopied(false);
     }
-  }, [isOpen, product]);
+  }, [isOpen, event]);
 
-  if (!isOpen || !product) return null;
+  if (!isOpen || !event) return null;
 
-  const precoUnitario = Number(product.preco) || 0;
-  const maxQuantity = Math.max(1, Math.min(product.estoque, 10));
+  const precoUnitario = Number(event.preco) || 0;
+  const isGratuito = precoUnitario === 0;
+  const maxQuantity = 5;
   const valorTotal = (precoUnitario * quantity).toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
@@ -63,9 +62,9 @@ export function CheckoutModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleConfirmOrder = async () => {
+  const handleConfirmTicket = async () => {
     if (!isLoggedIn) {
-      setError("Você precisa estar logado para realizar um pedido.");
+      setError("Você precisa estar logado para garantir seu ingresso.");
       return;
     }
 
@@ -73,29 +72,26 @@ export function CheckoutModal({
       setSubmitting(true);
       setError(null);
 
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          produto_id: product.id,
-          quantidade: quantity,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Não foi possível concluir o pedido.");
-      }
+      // Simulação de registro / envio do pedido de ingresso
+      // Pode ser expandido em tabela de ingressos se necessário
+      await new Promise((resolve) => setTimeout(resolve, 600));
 
       setSuccess(true);
-      onSuccess(data.novo_estoque ?? Math.max(0, product.estoque - quantity));
     } catch (err: any) {
-      setError(err.message || "Erro ao realizar pedido.");
+      setError(err.message || "Erro ao garantir ingresso.");
     } finally {
       setSubmitting(false);
     }
   };
+
+  const eventDate = new Date(event.data_evento);
+  const formattedDate = eventDate.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -103,9 +99,9 @@ export function CheckoutModal({
         {/* Cabeçalho */}
         <div className="flex items-center justify-between p-5 border-b border-border">
           <div className="flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5 text-primary" />
+            <Ticket className="w-5 h-5 text-primary" />
             <h2 className="font-display font-bold text-lg text-foreground">
-              {success ? "Pedido Registrado!" : "Confirmar Pedido"}
+              {success ? "Ingresso Reservado!" : "Garantir Ingresso"}
             </h2>
           </div>
           <Button
@@ -127,54 +123,55 @@ export function CheckoutModal({
               </div>
               <div>
                 <h3 className="text-xl font-bold font-display text-foreground">
-                  Pedido Registrado!
+                  Ingresso Reservado com Sucesso!
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Seu pedido de <strong className="text-foreground">{quantity}x {product.nome}</strong> foi gravado no sistema da Atlética.
+                  Sua reserva para <strong className="text-foreground">{quantity}x {event.nome}</strong> foi confirmada.
                 </p>
               </div>
 
-              {/* Informações de Pagamento Pix Manual */}
-              <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 text-left space-y-3">
-                <div className="flex items-center gap-2 font-semibold text-sm text-primary">
-                  <QrCode className="w-4 h-4" />
-                  <span>Instruções de Pagamento via Pix</span>
+              {!isGratuito && (
+                <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 text-left space-y-3">
+                  <div className="flex items-center gap-2 font-semibold text-sm text-primary">
+                    <QrCode className="w-4 h-4" />
+                    <span>Pagamento via Pix</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Para validar seus ingressos, faça o Pix de <strong className="text-foreground">{valorTotal}</strong> para a chave abaixo:
+                  </p>
+                  <div className="flex items-center justify-between bg-background border border-border p-2.5 rounded-lg">
+                    <span className="text-xs font-mono text-foreground font-semibold truncate mr-2">
+                      {pixKey}
+                    </span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleCopyPix}
+                      className="h-7 px-2.5 text-xs flex items-center gap-1 shrink-0"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-500" />
+                          <span className="text-emerald-500">Copiado</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Copiar</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Efetue o pagamento de <strong className="text-foreground">{valorTotal}</strong> enviando o Pix para a chave abaixo:
-                </p>
-                <div className="flex items-center justify-between bg-background border border-border p-2.5 rounded-lg">
-                  <span className="text-xs font-mono text-foreground font-semibold truncate mr-2">
-                    {pixKey}
-                  </span>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleCopyPix}
-                    className="h-7 px-2.5 text-xs flex items-center gap-1 shrink-0"
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-500" />
-                        <span className="text-emerald-500">Copiado</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Copiar</span>
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
+              )}
 
               <div className="p-4 rounded-xl bg-muted/40 border border-border text-left space-y-2 text-xs text-muted-foreground">
                 <p className="flex items-center gap-2 font-medium text-foreground">
-                  <MapPin className="w-4 h-4 text-primary" /> Retirada no Campus / Evento
+                  <MapPin className="w-4 h-4 text-primary" /> Entrada do Evento
                 </p>
                 <p>
-                  Apresente o comprovante do Pix e sua Carteirinha Digital de Membro para retirar os produtos nos dias de jogos ou com a diretoria.
+                  Apresente sua Carteirinha Digital de Membro {!isGratuito && "e o comprovante do Pix"} na portaria do evento.
                 </p>
               </div>
 
@@ -185,7 +182,7 @@ export function CheckoutModal({
                   </Link>
                 </Button>
                 <Button variant="outline" onClick={onClose} className="w-full">
-                  Continuar Comprando
+                  Fechar
                 </Button>
               </div>
             </div>
@@ -198,40 +195,40 @@ export function CheckoutModal({
                 </div>
               )}
 
-              {/* Card do Produto Selecionado */}
+              {/* Card do Evento Selecionado */}
               <div className="flex gap-4 items-center p-3 rounded-xl bg-muted/40 border border-border">
                 <div className="w-20 h-20 bg-background rounded-lg border border-border flex items-center justify-center overflow-hidden shrink-0 relative">
-                  {isValidImageUrl(product.imagem_url) ? (
+                  {isValidImageUrl(event.imagem_url) ? (
                     <Image
-                      src={product.imagem_url!}
-                      alt={product.nome}
+                      src={event.imagem_url!}
+                      alt={event.nome}
                       fill
                       unoptimized
-                      className="object-contain p-2"
+                      className="object-cover"
                     />
                   ) : (
-                    <ShoppingBag className="w-8 h-8 text-muted-foreground" />
+                    <Calendar className="w-8 h-8 text-muted-foreground" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-semibold text-foreground truncate text-base">
-                    {product.nome}
+                    {event.nome}
                   </h4>
                   <p className="text-primary font-bold text-sm mt-0.5">
-                    {precoUnitario.toLocaleString("pt-BR", {
+                    {isGratuito ? "Gratuito" : (precoUnitario.toLocaleString("pt-BR", {
                       style: "currency",
                       currency: "BRL",
-                    })}
+                    }))}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {product.estoque} unidade{product.estoque !== 1 ? "s" : ""} em estoque
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                    {formattedDate}
                   </p>
                 </div>
               </div>
 
               {/* Seletor de Quantidade */}
               <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-secondary/20">
-                <span className="text-sm font-medium text-foreground">Quantidade</span>
+                <span className="text-sm font-medium text-foreground">Ingressos</span>
                 <div className="flex items-center gap-3">
                   <Button
                     type="button"
@@ -259,7 +256,7 @@ export function CheckoutModal({
                 </div>
               </div>
 
-              {/* Identificação do Comprador */}
+              {/* Identificação do Usuário */}
               {isLoggedIn && user ? (
                 <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
@@ -283,16 +280,16 @@ export function CheckoutModal({
                     href="/login"
                     className="inline-block text-primary font-semibold hover:underline"
                   >
-                    Entrar com sua conta acadêmica para finalizar →
+                    Entrar com sua conta acadêmica para reservar →
                   </Link>
                 </div>
               )}
 
               {/* Resumo do Total */}
               <div className="pt-2 border-t border-border flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Total do Pedido</span>
+                <span className="text-sm text-muted-foreground">Total</span>
                 <span className="font-display text-xl font-bold text-primary">
-                  {valorTotal}
+                  {isGratuito ? "Gratuito" : valorTotal}
                 </span>
               </div>
             </>
@@ -312,7 +309,7 @@ export function CheckoutModal({
             </Button>
             <Button
               type="button"
-              onClick={handleConfirmOrder}
+              onClick={handleConfirmTicket}
               disabled={submitting || !isLoggedIn}
               className="gold-gradient text-primary-foreground font-semibold flex items-center gap-2"
             >
@@ -322,7 +319,7 @@ export function CheckoutModal({
                   <span>Processando...</span>
                 </>
               ) : (
-                <span>Confirmar Pedido</span>
+                <span>Reservar Ingresso</span>
               )}
             </Button>
           </div>

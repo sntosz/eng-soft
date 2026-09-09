@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import Image from "next/image";
-import { Calendar, MapPin, Clock, Users, Ticket, Plus, Edit2, Trash2 } from "lucide-react";
+import { Calendar, MapPin, Clock, Ticket, Plus, Edit2, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Event } from "@/types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { EventModal } from "@/components/EventModal";
+import { EventTicketModal } from "@/components/EventTicketModal";
 import { isValidImageUrl } from "@/lib/utils";
 
 const EventsPage = () => {
@@ -15,6 +16,11 @@ const EventsPage = () => {
   const isAdmin = user?.e_admin === true;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+
+  // Estados do Modal de Compra de Ingresso
+  const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
+  const [eventForTicket, setEventForTicket] = useState<Event | null>(null);
+
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -45,6 +51,11 @@ const EventsPage = () => {
 
   const handleCreate = () => { setSelectedEvent(null); setIsModalOpen(true); };
   const handleEdit = (e: Event) => { setSelectedEvent(e); setIsModalOpen(true); };
+  const handleBuyTicket = (e: Event) => {
+    setEventForTicket(e);
+    setIsTicketModalOpen(true);
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm("Tem certeza?")) return;
     try {
@@ -53,6 +64,7 @@ const EventsPage = () => {
       setEvents(events.filter(e => e.id !== id));
     } catch(err: any) { alert("Erro ao excluir: " + err.message); }
   };
+
   const handleSubmit = async (data: Partial<Event>) => {
     try {
       const formattedData = { ...data, data_evento: data.data_evento ? new Date(data.data_evento).toISOString() : new Date().toISOString() };
@@ -129,7 +141,10 @@ const EventsPage = () => {
               <span className="truncate">{event.local || "Local a definir"}</span>
             </span>
             <span className="flex items-center gap-2 md:col-span-2 mt-4">
-              <button className="gold-gradient text-primary-foreground px-6 py-2 rounded-lg font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity w-full sm:w-auto justify-center">
+              <button
+                onClick={() => handleBuyTicket(event)}
+                className="gold-gradient text-primary-foreground px-6 py-2 rounded-lg font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity w-full sm:w-auto justify-center cursor-pointer"
+              >
                 <Ticket className="w-4 h-4" />
                 Garantir Ingresso
               </button>
@@ -195,7 +210,21 @@ const EventsPage = () => {
             </div>
           )}
         </div>
-        <EventModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleSubmit} initialData={selectedEvent || undefined} />
+
+        {/* Modal de Adicionar / Editar Evento */}
+        <EventModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleSubmit}
+          initialData={selectedEvent || undefined}
+        />
+
+        {/* Modal de Compra / Reserva de Ingresso */}
+        <EventTicketModal
+          isOpen={isTicketModalOpen}
+          onClose={() => setIsTicketModalOpen(false)}
+          event={eventForTicket}
+        />
       </main>
     </div>
   );
