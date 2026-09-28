@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { Trophy, Calendar, MapPin, Clock, Plus, Edit2, Trash2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import logoSwe from "@/assets/logo-swe.png";
 import logoLaw from "@/assets/logo-law.png";
@@ -11,12 +10,23 @@ import { Match } from "@/types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { MatchModal } from "@/components/MatchModal";
 import { isValidImageUrl } from "@/lib/utils";
+import { toast } from "@/components/ui/sonner";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const MatchesPage = () => {
   const { user } = useCurrentUser();
   const isAdmin = user?.e_admin === true;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+  const [matchToDelete, setMatchToDelete] = useState<Match | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -24,13 +34,12 @@ const MatchesPage = () => {
   const loadMatches = async () => {
     try {
       setLoading(true);
-      const { data, error: sbError } = await supabase
-          .from("partidas")
-          .select("*")
-          .order("data_partida", { ascending: true });
+      setError("");
+      const res = await fetch("/api/matches");
+      const data = await res.json();
 
-      if (sbError) throw sbError;
-      setMatches(data || []);
+      if (!res.ok) throw new Error(data.error || "Erro ao buscar partidas");
+      setMatches(data.matches || []);
     } catch (err: any) {
       console.error("Erro ao buscar partidas:", err);
       setError(err.message || "Erro ao buscar partidas");
@@ -53,43 +62,45 @@ const MatchesPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir esta partida?")) return;
+  const handleDelete = (match: Match) => {
+    setMatchToDelete(match);
+  };
+
+  const confirmDelete = async () => {
+    if (!matchToDelete) return;
+
+    const matchId = matchToDelete.id;
+    setMatchToDelete(null);
+
     try {
-      const { error } = await supabase.from("partidas").delete().eq("id", id);
-      if (error) throw error;
-      setMatches((prev) => prev.filter((m) => m.id !== id));
+      const res = await fetch(`/api/matches?id=${matchId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao excluir partida");
+
+      setMatches((prev) => prev.filter((match) => match.id !== matchId));
+      toast.success("Partida excluída com sucesso.");
     } catch (err: any) {
-      alert("Erro ao excluir: " + err.message);
+      toast.error(err.message || "Erro ao excluir partida");
     }
   };
 
   const handleSubmit = async (data: Partial<Match>) => {
     try {
-      const formattedData = {
-        ...data,
-        data_partida: data.data_partida
-            ? new Date(data.data_partida).toISOString()
-            : new Date().toISOString(),
-      };
+      const method = data.id ? "PUT" : "POST";
+      const res = await fetch("/api/matches", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-      if (data.id) {
-        const { error } = await supabase
-            .from("partidas")
-            .update(formattedData)
-            .eq("id", data.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-            .from("partidas")
-            .insert([formattedData]);
-        if (error) throw error;
-      }
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Erro ao salvar partida");
 
+      toast.success(data.id ? "Partida atualizada com sucesso!" : "Partida criada com sucesso!");
       setIsModalOpen(false);
       await loadMatches();
     } catch (err: any) {
-      alert("Erro ao salvar: " + err.message);
+      toast.error(err.message || "Erro ao salvar a partida");
     }
   };
 
@@ -222,7 +233,7 @@ const MatchesPage = () => {
                   <Edit2 className="w-3 h-3" /> Editar
                 </button>
                 <button
-                    onClick={() => handleDelete(match.id)}
+                    onClick={() => handleDelete(match)}
                     className="bg-destructive/10 text-destructive px-3 py-1 rounded text-xs flex items-center gap-1 hover:bg-destructive/20 transition-colors"
                 >
                   <Trash2 className="w-3 h-3" /> Excluir
@@ -315,6 +326,24 @@ const MatchesPage = () => {
               onSubmit={handleSubmit}
               initialData={selectedMatch || undefined}
           />
+          <Dialog open={matchToDelete !== null} onOpenChange={(open) => !open && setMatchToDelete(null)}>
+            <DialogContent className="max-w-md border-border bg-card">
+              <DialogHeader>
+                <DialogTitle>Excluir partida?</DialogTitle>
+                <DialogDescription>
+                  Tem certeza que deseja excluir esta partida? Esta ação não pode ser desfeita.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="flex-row justify-end gap-2 space-x-0">
+                <Button variant="outline" onClick={() => setMatchToDelete(null)}>
+                  Cancelar
+                </Button>
+                <Button variant="destructive" onClick={confirmDelete}>
+                  Confirmar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </main>
       </div>
   );
