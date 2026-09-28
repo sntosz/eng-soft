@@ -8,9 +8,9 @@ import { ProductModal } from "@/components/ProductModal";
 import { CheckoutModal } from "@/components/CheckoutModal";
 import { ShoppingBag, Package, Plus, Edit2, Trash2, ClipboardList, CheckCircle, Clock, AlertTriangle, RefreshCw } from "lucide-react";
 import { Product } from "@/types";
-import { supabase } from "@/lib/supabase";
 import { isValidImageUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/sonner";
 
 export default function StorePage() {
   const { user } = useCurrentUser();
@@ -37,18 +37,14 @@ export default function StorePage() {
       setLoading(true);
       setError("");
 
-      const { data, error: sbError } = await supabase
-        .from("produtos")
-        .select("*")
-        .order("destaque", { ascending: false, nullsFirst: false })
-        .order("nome", { ascending: true });
+      const res = await fetch("/api/products");
+      const data = await res.json();
 
-      if (sbError) {
-        console.error("Erro retornado pelo Supabase:", sbError);
-        throw sbError;
+      if (!res.ok) {
+        throw new Error(data.error || "Erro ao carregar produtos");
       }
 
-      setProducts(data || []);
+      setProducts(data.products || []);
     } catch (err: any) {
       console.error("Erro ao buscar produtos:", err);
       setError(err.message || "Erro ao buscar produtos");
@@ -68,6 +64,7 @@ export default function StorePage() {
       setOrders(data.pedidos || []);
     } catch (err: any) {
       console.error("Erro ao carregar pedidos:", err);
+      toast.error(err.message || "Erro ao carregar pedidos.");
     } finally {
       setLoadingOrders(false);
     }
@@ -99,15 +96,23 @@ export default function StorePage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este produto?")) return;
-    try {
-      const res = await fetch(`/api/products?id=${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Erro ao excluir produto");
-      setProducts((prev) => prev.filter((p) => p.id !== id));
-    } catch (err: any) {
-      alert("Erro ao excluir: " + err.message);
-    }
+    toast("Tem certeza que deseja excluir este produto?", {
+      action: {
+        label: "Excluir",
+        onClick: async () => {
+          try {
+            const res = await fetch(`/api/products?id=${id}`, { method: "DELETE" });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Erro ao excluir produto");
+
+            setProducts((prev) => prev.filter((p) => p.id !== id));
+            toast.success("Produto excluído com sucesso!");
+          } catch (err: any) {
+            toast.error(err.message || "Erro ao excluir produto");
+          }
+        },
+      },
+    });
   };
 
   const handleSubmit = async (data: Partial<Product>) => {
@@ -120,6 +125,7 @@ export default function StorePage() {
         });
         const resJson = await res.json();
         if (!res.ok) throw new Error(resJson.error || "Erro ao atualizar produto");
+        toast.success("Produto atualizado com sucesso!");
       } else {
         const res = await fetch("/api/products/create", {
           method: "POST",
@@ -128,11 +134,12 @@ export default function StorePage() {
         });
         const resJson = await res.json();
         if (!res.ok) throw new Error(resJson.error || "Erro ao criar produto");
+        toast.success("Produto cadastrado com sucesso!");
       }
       setIsModalOpen(false);
       await loadProducts();
     } catch (err: any) {
-      alert("Erro ao salvar: " + err.message);
+      toast.error(err.message || "Erro ao salvar produto");
     }
   };
 
@@ -159,8 +166,9 @@ export default function StorePage() {
           ord.id === pedidoId ? { ...ord, status_pedido: novoStatus } : ord
         )
       );
+      toast.success("Status do pedido atualizado!");
     } catch (err: any) {
-      alert("Erro ao alterar status: " + err.message);
+      toast.error(err.message || "Erro ao alterar status");
     } finally {
       setUpdatingOrderId(null);
     }
