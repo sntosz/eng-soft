@@ -78,76 +78,44 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: firstError }, { status: 400 });
     }
 
-    const { produto_id, quantidade: qtd } = parseResult.data;
+    const { produto_id, quantidade } = parseResult.data;
+    const { data, error } = await supabaseAdmin.rpc("create_order_atomic", {
+      p_membro_id: user.id,
+      p_produto_id: produto_id,
+      p_quantidade: quantidade,
+    });
 
-    // Busca o produto atualizado
-    const { data: produto, error: prodErr } = await supabaseAdmin
-      .from("produtos")
-      .select("id, nome, preco, estoque")
-      .eq("id", produto_id)
-      .maybeSingle();
+    if (error) {
+      if (error.code === "P0002") {
+        return NextResponse.json({ error: "Produto não encontrado." }, { status: 404 });
+      }
 
-    if (prodErr || !produto) {
-      return NextResponse.json(
-        { error: "Produto não encontrado." },
-        { status: 404 }
-      );
-    }
+      if (error.code === "P0001" && error.message === "INSUFFICIENT_STOCK") {
+        return NextResponse.json(
+          { error: "Estoque insuficiente para a quantidade solicitada." },
+          { status: 409 }
+        );
+      }
 
-    if (produto.estoque < qtd) {
-      return NextResponse.json(
-        {
-          error: `Estoque insuficiente. Restam apenas ${produto.estoque} unidades disponíveis.`,
-        },
-        { status: 400 }
-      );
-    }
-
-    const valorUnitario = Number(produto.preco) || 0;
-    const total = valorUnitario * qtd;
-
-    // 1. Cria o registro do pedido
-    const { data: pedido, error: pedErr } = await supabaseAdmin
-      .from("pedidos")
-      .insert({
-        membro_id: user.id,
-        status_pedido: "Processando...",
-        total,
-      })
-      .select("id, membro_id, status_pedido, total, criado_em")
-      .single();
-
-    if (pedErr || !pedido) {
-      console.error("Erro ao criar pedido:", pedErr);
+      console.error("Erro ao criar pedido:", error);
       return NextResponse.json(
         { error: "Erro ao criar pedido no banco de dados." },
         { status: 500 }
       );
     }
 
-    // 2. Insere os itens vinculados ao pedido
-    const { error: itemErr } = await supabaseAdmin.from("itens_pedido").insert({
-      pedido_id: pedido.id,
-      produto_id: produto.id,
-      quantidade: qtd,
-      preco_unitario: valorUnitario,
-    });
-
-    if (itemErr) {
-      console.error("Erro ao vincular item ao pedido:", itemErr);
+    if (!data?.pedido || typeof data.novo_estoque !== "number") {
+      console.error("A função create_order_atomic retornou uma resposta inválida.");
+      return NextResponse.json(
+        { error: "Erro ao criar pedido no banco de dados." },
+        { status: 500 }
+      );
     }
-
-    // 3. Atualiza o estoque do produto
-    const novoEstoque = Math.max(0, produto.estoque - qtd);
-    await supabaseAdmin
-      .from("produtos")
-      .update({ estoque: novoEstoque })
-      .eq("id", produto.id);
 
     return NextResponse.json({
       success: true,
-      pedido,
-      novo_estoque: novoEstoque,
+      pedido: data.pedido,
+      novo_estoque: data.novo_estoque,
       message: "Pedido realizado com sucesso!",
     });
   } catch (err: any) {
