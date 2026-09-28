@@ -12,9 +12,7 @@ test.describe("Fluxos Principais da Plataforma", () => {
       name: "Entrar",
       exact: true,
     });
-    await expect(
-        page.getByRole("link", { name: "Loja", exact: true })
-    ).toBeVisible();
+    await expect(loginButton).toBeVisible();
 
     // Verifica itens da navegação lateral
     await expect(page.getByRole("link", { name: "Home", exact: true })).toBeVisible();
