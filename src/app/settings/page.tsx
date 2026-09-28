@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Bell, Globe, Monitor, Moon, Palette, Save, Settings as SettingsIcon, Shield, Sun, User } from "lucide-react";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ interface SettingsState {
 }
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { user, loading, refreshUser } = useCurrentUser();
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -74,7 +76,11 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
-    if (!user) return;
+    if (loading) return;
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
 
     setProfile({
       name: user.nome || "",
@@ -82,7 +88,7 @@ export default function SettingsPage() {
       curso: user.curso || "",
       role: user.e_admin ? "Administrador" : "Membro",
     });
-  }, [user]);
+  }, [user, loading, router]);
 
   const handleProfileChange = (key: keyof ProfileState, value: string) => {
     setProfile((prev) => ({ ...prev, [key]: value }));
