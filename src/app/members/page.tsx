@@ -343,7 +343,7 @@ const MembersPage = () => {
                                 nome: selectedMember.nome,
                                 email: selectedMember.email,
                                 curso: selectedMember.curso,
-                                ano_curso: selectedMember.ano_curso
+                                ano_curso: selectedMember.ano_curso || selectedMember.ano_turma || ""
                             }
                             : undefined
                     }

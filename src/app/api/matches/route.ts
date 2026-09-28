@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireAdmin } from "@/lib/authServer";
-import { matchSchema } from "@/lib/validations";
+import { matchSchema, matchUpdateSchema, uuidSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -19,10 +19,10 @@ export async function GET() {
     }
 
     return NextResponse.json({ matches: data || [] });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Erro na rota GET /api/matches:", err);
     return NextResponse.json(
-      { error: err.message || "Erro ao buscar partidas" },
+      { error: err instanceof Error ? err.message : "Erro ao buscar partidas" },
       { status: 500 }
     );
   }
@@ -80,10 +80,10 @@ export async function POST(req: Request) {
       match,
       message: "Partida criada com sucesso!",
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Erro na rota POST /api/matches:", err);
     return NextResponse.json(
-      { error: err.message || "Erro interno ao criar partida" },
+      { error: err instanceof Error ? err.message : "Erro interno ao criar partida" },
       { status: 500 }
     );
   }
@@ -95,22 +95,14 @@ export async function PUT(req: Request) {
     const { response } = await requireAdmin();
     if (response) return response;
 
-    const rawBody = await req.json().catch(() => ({}));
-    if (!rawBody?.id) {
-      return NextResponse.json(
-        { error: "ID da partida é obrigatório." },
-        { status: 400 }
-      );
-    }
-
-    const parseResult = matchSchema.partial().safeParse(rawBody);
+    const rawBody = await req.json().catch(() => null);
+    const parseResult = matchUpdateSchema.safeParse(rawBody);
     if (!parseResult.success) {
       const firstError = parseResult.error.errors[0]?.message || "Dados de atualização inválidos";
       return NextResponse.json({ error: firstError }, { status: 400 });
     }
 
-    const updatePayload: Record<string, any> = { ...parseResult.data };
-    delete updatePayload.id;
+    const { id, ...updatePayload } = parseResult.data;
 
     if (updatePayload.data_partida) {
       updatePayload.data_partida = new Date(updatePayload.data_partida).toISOString();
@@ -119,7 +111,7 @@ export async function PUT(req: Request) {
     const { data: match, error } = await supabaseAdmin
       .from("partidas")
       .update(updatePayload)
-      .eq("id", rawBody.id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -133,10 +125,10 @@ export async function PUT(req: Request) {
       match,
       message: "Partida atualizada com sucesso!",
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Erro na rota PUT /api/matches:", err);
     return NextResponse.json(
-      { error: err.message || "Erro interno ao atualizar partida" },
+      { error: err instanceof Error ? err.message : "Erro interno ao atualizar partida" },
       { status: 500 }
     );
   }
@@ -149,11 +141,15 @@ export async function DELETE(req: Request) {
     if (response) return response;
 
     const { searchParams } = new URL(req.url);
-    let id = searchParams.get("id");
+    const idResult = uuidSchema.safeParse(searchParams.get("id"));
+    let id = idResult.success ? idResult.data : null;
 
     if (!id) {
-      const body = await req.json().catch(() => ({}));
-      id = body?.id;
+      const body = await req.json().catch(() => null);
+      const bodyIdResult = uuidSchema.safeParse(
+        typeof body === "object" && body !== null && "id" in body ? body.id : null
+      );
+      id = bodyIdResult.success ? bodyIdResult.data : null;
     }
 
     if (!id) {
@@ -177,10 +173,10 @@ export async function DELETE(req: Request) {
       success: true,
       message: "Partida excluída com sucesso!",
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Erro na rota DELETE /api/matches:", err);
     return NextResponse.json(
-      { error: err.message || "Erro interno ao excluir partida" },
+      { error: err instanceof Error ? err.message : "Erro interno ao excluir partida" },
       { status: 500 }
     );
   }

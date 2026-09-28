@@ -15,11 +15,17 @@ interface EventFormProps {
   initialData?: Event;
 }
 
+const formatDateTimeInput = (value: string | Date = new Date()) => {
+  const date = new Date(value);
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+  return date.toISOString().slice(0, 16);
+};
+
 export function EventModal({ isOpen, onClose, onSubmit, initialData }: EventFormProps) {
   const [formData, setFormData] = useState<Partial<Event>>({
     nome: "",
     descricao: "",
-    data_evento: new Date().toISOString().slice(0, 16),
+    data_evento: formatDateTimeInput(),
     local: "",
     imagem_url: "",
     preco: 0,
@@ -31,14 +37,14 @@ export function EventModal({ isOpen, onClose, onSubmit, initialData }: EventForm
   useEffect(() => {
     if (initialData) {
       const formattedDate = initialData.data_evento
-        ? new Date(initialData.data_evento).toISOString().slice(0, 16)
+        ? formatDateTimeInput(initialData.data_evento)
         : "";
       setFormData({ ...initialData, data_evento: formattedDate });
     } else {
       setFormData({
         nome: "",
         descricao: "",
-        data_evento: new Date().toISOString().slice(0, 16),
+        data_evento: formatDateTimeInput(),
         local: "",
         imagem_url: "",
         preco: 0,
@@ -72,6 +78,7 @@ export function EventModal({ isOpen, onClose, onSubmit, initialData }: EventForm
       await onSubmit({
         ...formData,
         nome: formData.nome?.trim(),
+        data_evento: formData.data_evento ? new Date(formData.data_evento).toISOString() : "",
         local: formData.local?.trim(),
         imagem_url: finalImageUrl,
       });

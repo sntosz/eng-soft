@@ -27,12 +27,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const ano = (data as any).ano_turma;
+    if (!data) {
+      return NextResponse.json({ error: "Não foi possível criar a conta." }, { status: 500 });
+    }
+
+    const ano = data.ano_turma;
     const token = signToken({
       sub: data.id,
       email: data.email,
       nome: data.nome,
-      curso: (data as any).curso,
+      curso: data.curso,
       ano_curso: ano,
       e_admin: false,
     });
@@ -42,7 +46,7 @@ export async function POST(req: Request) {
         id: data.id,
         nome: data.nome,
         email: data.email,
-        curso: (data as any).curso,
+        curso: data.curso,
         ano_curso: ano,
         e_admin: false,
       },
@@ -56,8 +60,11 @@ export async function POST(req: Request) {
     });
 
     return response;
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Auth register error:", err);
-    return NextResponse.json({ error: err.message || String(err) }, { status: 500 });
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Erro ao criar conta" },
+      { status: 500 }
+    );
   }
 }

@@ -1,11 +1,23 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { BUCKETS } from "@/lib/supabase";
 import { Product } from "@/types";
+import { productPayloadSchema } from "@/lib/validations";
 
 export const PRODUCT_IMAGE_BUCKET = BUCKETS.PRODUTOS;
 
 
-export function mapProduct(row: any): Product {
+type ProductRow = {
+  id: string;
+  nome: string;
+  descricao: string | null;
+  preco: number | string;
+  estoque: number | null;
+  imagem_url: string | null;
+  destaque: boolean | null;
+  created_at?: string;
+};
+
+export function mapProduct(row: ProductRow): Product {
   return {
     id: row.id,
     nome: row.nome,
@@ -41,44 +53,16 @@ export async function removeProductImage(url?: string | null) {
   }
 }
 
-export type ProductPayload = {
-  nome: string;
-  descricao: string | null;
-  preco: number;
-  estoque: number;
-  imagem_url: string | null;
-  destaque: boolean;
-};
+export type ProductPayload = ReturnType<typeof productPayloadSchema.parse>;
 
 /** Valida e normaliza o body de create/update. */
 export function parseProductPayload(
-  body: any
-): { payload: ProductPayload; error?: never } | { payload?: never; error: string } {
-  const nome = typeof body?.nome === "string" ? body.nome.trim() : "";
-  if (!nome) {
-    return { error: "Nome é obrigatório" };
+  body: unknown
+): { success: true; payload: ProductPayload } | { success: false; error: string } {
+  const result = productPayloadSchema.safeParse(body);
+  if (!result.success) {
+    return { success: false, error: result.error.errors[0]?.message || "Dados do produto inválidos" };
   }
 
-  const preco = Number(body?.preco);
-  if (!Number.isFinite(preco) || preco < 0) {
-    return { error: "Preço deve ser um número maior ou igual a zero" };
-  }
-
-  const estoque = body?.estoque === "" || body?.estoque == null ? 0 : Number(body.estoque);
-  if (!Number.isInteger(estoque) || estoque < 0) {
-    return { error: "Estoque deve ser um número inteiro maior ou igual a zero" };
-  }
-
-  const descricao = typeof body?.descricao === "string" ? body.descricao.trim() : "";
-
-  return {
-    payload: {
-      nome,
-      descricao: descricao || null,
-      preco,
-      estoque,
-      imagem_url: typeof body?.imagem_url === "string" && body.imagem_url ? body.imagem_url : null,
-      destaque: body?.destaque === true
-    }
-  };
+  return { success: true, payload: result.data };
 }

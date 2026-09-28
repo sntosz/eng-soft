@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import type { SignOptions } from "jsonwebtoken";
 import crypto from "crypto";
 
 const JWT_SECRET = process.env.JWT_SECRET || "";
@@ -38,7 +39,10 @@ export function hashOtpCode(code: string, email: string): string {
     .digest("hex");
 }
 
-export function signResetToken(payload: Record<string, any>, expiresIn = "15m") {
+export function signResetToken(
+  payload: Record<string, any>,
+  expiresIn: SignOptions["expiresIn"] = "15m"
+) {
   if (!JWT_SECRET) throw new Error("JWT_SECRET not set");
   return jwt.sign(payload, JWT_SECRET, { expiresIn });
 }
