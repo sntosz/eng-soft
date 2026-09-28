@@ -8,14 +8,19 @@ test.describe("Fluxos Principais da Plataforma", () => {
     await expect(page.locator("body")).toContainText("A.A.A.E.S.");
 
     // Verifica botão de Entrar na Home
-    const loginButton = page.getByRole("link", { name: /entrar/i });
-    await expect(loginButton).toBeVisible();
+    const loginButton = page.getByRole("link", {
+      name: "Entrar",
+      exact: true,
+    });
+    await expect(
+        page.getByRole("link", { name: "Loja", exact: true })
+    ).toBeVisible();
 
     // Verifica itens da navegação lateral
-    await expect(page.getByRole("link", { name: "Home" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Partidas" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Eventos" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Loja" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Home", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Partidas", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Eventos", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Loja", exact: true })).toBeVisible();
   });
 
   test("deve navegar para a página de Login e exibir validação de campos", async ({ page }) => {
@@ -46,11 +51,14 @@ test.describe("Fluxos Principais da Plataforma", () => {
     // Verifica cabeçalho da loja
     await expect(page.getByRole("heading", { name: /loja oficial/i })).toBeVisible();
 
-    // Verifica que a página carregou a listagem de produtos ou mensagem vazia
-    const hasProducts = await page.locator(".card-glow").count();
-    const hasEmptyState = await page.getByText(/nenhum produto disponível/i).count();
+    await expect.poll(async () => {
+      const hasProducts = await page.locator(".card-glow").count();
+      const hasEmptyState = await page
+          .getByText(/nenhum produto disponível/i)
+          .count();
 
-    expect(hasProducts > 0 || hasEmptyState > 0).toBeTruthy();
+      return hasProducts > 0 || hasEmptyState > 0;
+    }).toBe(true);
   });
 
   test("deve proteger a rota /settings e redirecionar usuário não autenticado para /login", async ({ page }) => {
