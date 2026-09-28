@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { comparePassword, signToken } from "@/lib/auth";
+import { loginSchema } from "@/lib/validations";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { email, password } = body || {};
+    const rawBody = await req.json().catch(() => ({}));
+    const parseResult = loginSchema.safeParse(rawBody);
 
-    if (!email || !password) {
-      return NextResponse.json({ error: "Email ou Senha vazios" }, { status: 400 });
+    if (!parseResult.success) {
+      const firstError = parseResult.error.errors[0]?.message || "Dados inválidos";
+      return NextResponse.json({ error: firstError }, { status: 400 });
     }
+
+    const { email, password } = parseResult.data;
 
     const { data, error } = await supabaseAdmin
       .from("membros")

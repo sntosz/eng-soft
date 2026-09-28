@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireAdmin } from "@/lib/authServer";
+import { matchSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,14 @@ export async function POST(req: Request) {
     const { response } = await requireAdmin();
     if (response) return response;
 
-    const body = await req.json();
+    const rawBody = await req.json().catch(() => ({}));
+    const parseResult = matchSchema.safeParse(rawBody);
+
+    if (!parseResult.success) {
+      const firstError = parseResult.error.errors[0]?.message || "Dados de partida inválidos";
+      return NextResponse.json({ error: firstError }, { status: 400 });
+    }
+
     const {
       time_casa,
       time_visitante,
@@ -44,27 +52,20 @@ export async function POST(req: Request) {
       foto_visitante,
       tipo_confronto,
       tag_partida,
-    } = body || {};
-
-    if (!time_casa?.trim() || !time_visitante?.trim() || !data_partida) {
-      return NextResponse.json(
-        { error: "Times e data da partida são obrigatórios." },
-        { status: 400 }
-      );
-    }
+    } = parseResult.data;
 
     const { data: match, error } = await supabaseAdmin
       .from("partidas")
       .insert({
-        time_casa: time_casa.trim(),
-        time_visitante: time_visitante.trim(),
+        time_casa,
+        time_visitante,
         data_partida: new Date(data_partida).toISOString(),
-        local_partida: local_partida?.trim() || "Arena Principal",
-        vitoria_atletica: Boolean(vitoria_atletica),
-        foto_casa: foto_casa || "",
-        foto_visitante: foto_visitante || "",
-        tipo_confronto: tipo_confronto || "Melhor de 3",
-        tag_partida: tag_partida || "Amistoso",
+        local_partida,
+        vitoria_atletica,
+        foto_casa,
+        foto_visitante,
+        tipo_confronto,
+        tag_partida,
       })
       .select()
       .single();
@@ -94,45 +95,31 @@ export async function PUT(req: Request) {
     const { response } = await requireAdmin();
     if (response) return response;
 
-    const body = await req.json();
-    const {
-      id,
-      time_casa,
-      time_visitante,
-      data_partida,
-      local_partida,
-      vitoria_atletica,
-      foto_casa,
-      foto_visitante,
-      tipo_confronto,
-      tag_partida,
-      concluida,
-    } = body || {};
-
-    if (!id) {
+    const rawBody = await req.json().catch(() => ({}));
+    if (!rawBody?.id) {
       return NextResponse.json(
         { error: "ID da partida é obrigatório." },
         { status: 400 }
       );
     }
 
-    const updatePayload: Record<string, any> = {};
+    const parseResult = matchSchema.partial().safeParse(rawBody);
+    if (!parseResult.success) {
+      const firstError = parseResult.error.errors[0]?.message || "Dados de atualização inválidos";
+      return NextResponse.json({ error: firstError }, { status: 400 });
+    }
 
-    if (time_casa !== undefined) updatePayload.time_casa = time_casa.trim();
-    if (time_visitante !== undefined) updatePayload.time_visitante = time_visitante.trim();
-    if (data_partida) updatePayload.data_partida = new Date(data_partida).toISOString();
-    if (local_partida !== undefined) updatePayload.local_partida = local_partida.trim();
-    if (vitoria_atletica !== undefined) updatePayload.vitoria_atletica = Boolean(vitoria_atletica);
-    if (foto_casa !== undefined) updatePayload.foto_casa = foto_casa;
-    if (foto_visitante !== undefined) updatePayload.foto_visitante = foto_visitante;
-    if (tipo_confronto !== undefined) updatePayload.tipo_confronto = tipo_confronto;
-    if (tag_partida !== undefined) updatePayload.tag_partida = tag_partida;
-    if (concluida !== undefined) updatePayload.concluida = Boolean(concluida);
+    const updatePayload: Record<string, any> = { ...parseResult.data };
+    delete updatePayload.id;
+
+    if (updatePayload.data_partida) {
+      updatePayload.data_partida = new Date(updatePayload.data_partida).toISOString();
+    }
 
     const { data: match, error } = await supabaseAdmin
       .from("partidas")
       .update(updatePayload)
-      .eq("id", id)
+      .eq("id", rawBody.id)
       .select()
       .single();
 

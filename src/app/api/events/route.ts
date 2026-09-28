@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireAdmin } from "@/lib/authServer";
+import { eventSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,14 @@ export async function POST(req: Request) {
     const { response } = await requireAdmin();
     if (response) return response;
 
-    const body = await req.json();
+    const rawBody = await req.json().catch(() => ({}));
+    const parseResult = eventSchema.safeParse(rawBody);
+
+    if (!parseResult.success) {
+      const firstError = parseResult.error.errors[0]?.message || "Dados de evento inválidos";
+      return NextResponse.json({ error: firstError }, { status: 400 });
+    }
+
     const {
       nome,
       descricao,
@@ -41,24 +49,17 @@ export async function POST(req: Request) {
       local,
       imagem_url,
       preco,
-    } = body || {};
-
-    if (!nome?.trim() || !data_evento) {
-      return NextResponse.json(
-        { error: "Nome e data do evento são obrigatórios." },
-        { status: 400 }
-      );
-    }
+    } = parseResult.data;
 
     const { data: event, error } = await supabaseAdmin
       .from("eventos")
       .insert({
-        nome: nome.trim(),
-        descricao: descricao?.trim() || "",
+        nome,
+        descricao,
         data_evento: new Date(data_evento).toISOString(),
-        local: local?.trim() || "Local a definir",
-        imagem_url: imagem_url || "",
-        preco: Number(preco) || 0,
+        local,
+        imagem_url,
+        preco,
       })
       .select()
       .single();
@@ -88,37 +89,31 @@ export async function PUT(req: Request) {
     const { response } = await requireAdmin();
     if (response) return response;
 
-    const body = await req.json();
-    const {
-      id,
-      nome,
-      descricao,
-      data_evento,
-      local,
-      imagem_url,
-      preco,
-    } = body || {};
-
-    if (!id) {
+    const rawBody = await req.json().catch(() => ({}));
+    if (!rawBody?.id) {
       return NextResponse.json(
         { error: "ID do evento é obrigatório." },
         { status: 400 }
       );
     }
 
-    const updatePayload: Record<string, any> = {};
+    const parseResult = eventSchema.partial().safeParse(rawBody);
+    if (!parseResult.success) {
+      const firstError = parseResult.error.errors[0]?.message || "Dados de atualização inválidos";
+      return NextResponse.json({ error: firstError }, { status: 400 });
+    }
 
-    if (nome !== undefined) updatePayload.nome = nome.trim();
-    if (descricao !== undefined) updatePayload.descricao = descricao.trim();
-    if (data_evento) updatePayload.data_evento = new Date(data_evento).toISOString();
-    if (local !== undefined) updatePayload.local = local.trim();
-    if (imagem_url !== undefined) updatePayload.imagem_url = imagem_url;
-    if (preco !== undefined) updatePayload.preco = Number(preco) || 0;
+    const updatePayload: Record<string, any> = { ...parseResult.data };
+    delete updatePayload.id;
+
+    if (updatePayload.data_evento) {
+      updatePayload.data_evento = new Date(updatePayload.data_evento).toISOString();
+    }
 
     const { data: event, error } = await supabaseAdmin
       .from("eventos")
       .update(updatePayload)
-      .eq("id", id)
+      .eq("id", rawBody.id)
       .select()
       .single();
 

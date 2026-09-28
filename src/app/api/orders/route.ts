@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAuthUser } from "@/lib/authServer";
+import { createOrderSchema, updateOrderStatusSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -69,23 +70,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.json();
-    const { produto_id, quantidade = 1 } = body || {};
+    const rawBody = await req.json().catch(() => ({}));
+    const parseResult = createOrderSchema.safeParse(rawBody);
 
-    if (!produto_id) {
-      return NextResponse.json(
-        { error: "ID do produto é obrigatório." },
-        { status: 400 }
-      );
+    if (!parseResult.success) {
+      const firstError = parseResult.error.errors[0]?.message || "Dados de pedido inválidos";
+      return NextResponse.json({ error: firstError }, { status: 400 });
     }
 
-    const qtd = parseInt(quantidade, 10);
-    if (isNaN(qtd) || qtd <= 0) {
-      return NextResponse.json(
-        { error: "A quantidade informada é inválida." },
-        { status: 400 }
-      );
-    }
+    const { produto_id, quantidade: qtd } = parseResult.data;
 
     // Busca o produto atualizado
     const { data: produto, error: prodErr } = await supabaseAdmin
@@ -177,15 +170,15 @@ export async function PUT(req: Request) {
       );
     }
 
-    const body = await req.json();
-    const { pedido_id, status_pedido } = body || {};
+    const rawBody = await req.json().catch(() => ({}));
+    const parseResult = updateOrderStatusSchema.safeParse(rawBody);
 
-    if (!pedido_id || !status_pedido) {
-      return NextResponse.json(
-        { error: "ID do pedido e novo status são obrigatórios." },
-        { status: 400 }
-      );
+    if (!parseResult.success) {
+      const firstError = parseResult.error.errors[0]?.message || "Dados de status inválidos";
+      return NextResponse.json({ error: firstError }, { status: 400 });
     }
+
+    const { pedido_id, status_pedido } = parseResult.data;
 
     const { data: pedidoAtualizado, error } = await supabaseAdmin
       .from("pedidos")

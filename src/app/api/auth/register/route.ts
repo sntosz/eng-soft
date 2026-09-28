@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { hashPassword, signToken } from "@/lib/auth";
+import { registerSchema } from "@/lib/validations";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { name, email, password, curso, ano_curso } = body || {};
+    const rawBody = await req.json().catch(() => ({}));
+    const parseResult = registerSchema.safeParse(rawBody);
 
-    if (!name || !email || !password || !curso || !ano_curso) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!parseResult.success) {
+      const firstError = parseResult.error.errors[0]?.message || "Dados de cadastro inválidos";
+      return NextResponse.json({ error: firstError }, { status: 400 });
     }
+
+    const { name, email, password, curso, ano_curso } = parseResult.data;
 
     const senha_hash = await hashPassword(password);
 
