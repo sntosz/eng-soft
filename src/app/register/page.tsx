@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { User, Mail, Lock, BookOpen, Calendar, AlertCircle, Loader2, UserPlus } from "lucide-react";
+import { User, Mail, Lock, BookOpen, Calendar, AlertCircle, Loader2, UserPlus, CreditCard, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,17 +13,19 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { isLoggedIn, loading: userLoading, refreshUser } = useCurrentUser();
+  const { isLoggedIn, loading: userLoading } = useCurrentUser();
 
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [curso, setCurso] = useState("Engenharia de Software");
   const [anoTurma, setAnoTurma] = useState("");
+  const [rgm, setRgm] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmaSenha, setConfirmaSenha] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [requestSent, setRequestSent] = useState(false);
 
   useEffect(() => {
     if (!userLoading && isLoggedIn) {
@@ -53,11 +55,12 @@ export default function RegisterPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nome: nome.trim(),
+          name: nome.trim(),
           email: email.trim(),
+          rgm: rgm.trim(),
           curso: curso.trim(),
-          ano_turma: anoTurma.trim(),
-          senha,
+          ano_curso: anoTurma.trim(),
+          password: senha,
         }),
       });
 
@@ -68,11 +71,9 @@ export default function RegisterPage() {
         return;
       }
 
-      await refreshUser();
-      router.push("/");
-      router.refresh();
-    } catch (err: any) {
-      setError(err.message || "Erro ao conectar com o servidor.");
+      setRequestSent(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erro ao conectar com o servidor.");
     } finally {
       setLoading(false);
     }
@@ -102,12 +103,25 @@ export default function RegisterPage() {
               <UserPlus className="w-4 h-4" />
               <span>Junte-se à Atlética</span>
             </div>
-            <h2 className="text-2xl font-bold">Cadastro de Membro</h2>
+            <h2 className="text-2xl font-bold">Solicitar acesso</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Crie sua conta para acessar produtos, ingressos e carteirinha.
+              Enviaremos sua solicitação para conferência do RGM na lista de sócios.
             </p>
           </header>
 
+          {requestSent ? (
+            <div className="rounded-xl border border-primary/30 bg-primary/10 p-6 text-center">
+              <BadgeCheck className="mx-auto mb-3 h-10 w-10 text-primary" />
+              <h3 className="text-lg font-semibold">Solicitação enviada</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Vamos conferir seu RGM com a lista de sócios. Sua conta só poderá ser acessada depois da aprovação; então você poderá entrar com a senha cadastrada.
+              </p>
+              <Link href="/login" className="mt-5 inline-block text-sm font-semibold text-primary hover:underline">
+                Voltar para o login
+              </Link>
+            </div>
+          ) : (
+          <>
           {error && (
             <div className="mb-5 p-3.5 rounded-lg bg-destructive/15 border border-destructive/30 text-destructive text-sm flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -146,6 +160,27 @@ export default function RegisterPage() {
                   className="pl-10 h-11 bg-secondary/40 border-border"
                 />
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="rgm">Número da matrícula (RGM)</Label>
+              <div className="relative">
+                <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="rgm"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  placeholder="Seu RGM conforme a carteirinha"
+                  value={rgm}
+                  onChange={(e) => setRgm(e.target.value)}
+                  required
+                  className="pl-10 h-11 bg-secondary/40 border-border"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Usaremos o RGM para conferir sua carteirinha com a lista de sócios.
+              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -222,10 +257,10 @@ export default function RegisterPage() {
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  <span>Cadastrando...</span>
+                  <span>Enviando solicitação...</span>
                 </>
               ) : (
-                <span>Criar Minha Conta</span>
+                <span>Solicitar acesso</span>
               )}
             </Button>
           </form>
@@ -236,6 +271,8 @@ export default function RegisterPage() {
               Fazer login
             </Link>
           </p>
+          </>
+          )}
         </div>
       </div>
     </main>

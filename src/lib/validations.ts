@@ -62,6 +62,11 @@ export const registerSchema = z.object({
     .min(1, "E-mail é obrigatório")
     .email("Formato de e-mail inválido")
     .transform((val) => val.toLowerCase()),
+  rgm: z
+    .string({ required_error: "RGM é obrigatório" })
+    .trim()
+    .min(1, "Informe o número da matrícula (RGM)")
+    .max(40, "RGM inválido"),
   password: z
     .string({ required_error: "Senha é obrigatória" })
     .min(6, "Senha deve ter pelo menos 6 caracteres"),
@@ -72,7 +77,8 @@ export const registerSchema = z.object({
   ano_curso: z
     .string({ required_error: "Ano ou turma é obrigatório" })
     .trim()
-    .min(1, "Informe seu ano ou turma"),
+    .optional()
+    .default(""),
 });
 
 const normalizedEmailSchema = z

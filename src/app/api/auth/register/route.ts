@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { hashPassword, signToken } from "@/lib/auth";
+import { hashPassword } from "@/lib/auth";
 import { registerSchema } from "@/lib/validations";
 
 export async function POST(req: Request) {
@@ -13,57 +13,44 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: firstError }, { status: 400 });
     }
 
-    const { name, email, password, curso, ano_curso } = parseResult.data;
-
-    const senha_hash = await hashPassword(password);
+    const { name, email, rgm, password, curso, ano_curso } = parseResult.data;
 
     const { data, error } = await supabaseAdmin
-      .from("membros")
-      .insert({ nome: name, email, senha_hash, curso: curso, ano_turma: ano_curso, e_admin: false })
-      .select("id,nome,email,curso,ano_turma,e_admin")
+      .from("solicitacoes_acesso")
+      .insert({
+        nome: name,
+        email,
+        rgm,
+        curso,
+        ano_turma: ano_curso,
+        senha_hash: await hashPassword(password),
+      })
+      .select("id")
       .maybeSingle();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { error: "Já existe uma solicitação pendente com esse e-mail ou RGM." },
+          { status: 409 }
+        );
+      }
+      console.error("Error creating member access request:", error);
+      return NextResponse.json({ error: "Não foi possível enviar a solicitação." }, { status: 500 });
     }
 
     if (!data) {
-      return NextResponse.json({ error: "Não foi possível criar a conta." }, { status: 500 });
+      return NextResponse.json({ error: "Não foi possível enviar a solicitação." }, { status: 500 });
     }
 
-    const ano = data.ano_turma;
-    const token = signToken({
-      sub: data.id,
-      email: data.email,
-      nome: data.nome,
-      curso: data.curso,
-      ano_curso: ano,
-      e_admin: false,
-    });
-
-    const response = NextResponse.json({
-      user: {
-        id: data.id,
-        nome: data.nome,
-        email: data.email,
-        curso: data.curso,
-        ano_curso: ano,
-        e_admin: false,
-      },
-    });
-
-    response.cookies.set("auth-token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60,
-    });
-
-    return response;
+    return NextResponse.json(
+      { success: true, message: "Solicitação enviada para análise da Atlética." },
+      { status: 201 }
+    );
   } catch (err: unknown) {
     console.error("Auth register error:", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Erro ao criar conta" },
+      { error: "Erro ao enviar solicitação de acesso." },
       { status: 500 }
     );
   }

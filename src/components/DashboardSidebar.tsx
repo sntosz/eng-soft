@@ -10,6 +10,7 @@ import {
   Calendar,
   Settings,
   User,
+  ClipboardCheck,
   LucideIcon,
 } from "lucide-react";
 import logoSwe from "@/assets/logo-aaaes.png";
@@ -30,6 +31,7 @@ const navItems: NavItem[] = [
   { icon: Calendar, label: "Eventos", href: "/events" },
   { icon: ShoppingBag, label: "Loja", href: "/store" },
   { icon: CreditCard, label: "Membros", href: "/members", adminOnly: true },
+  { icon: ClipboardCheck, label: "Solicitações", href: "/members/requests", adminOnly: true },
   { icon: Settings, label: "Configurações", href: "/settings", authOnly: true },
 ];
 
@@ -96,4 +98,3 @@ const DashboardSidebar = () => {
 };
 
 export default DashboardSidebar;
-

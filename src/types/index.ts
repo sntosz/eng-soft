@@ -5,6 +5,7 @@ export interface Member {
   curso: string;
   ano_turma?: string;
   ano_curso?: string; // Algumas telas usam ano_curso
+  rgm?: string | null;
   e_admin: boolean;
   senha_hash?: string;
   created_at?: string;
@@ -83,5 +84,4 @@ export interface JwtPayload {
   exp?: number;
   [key: string]: unknown;
 }
-
 
