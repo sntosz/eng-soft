@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Product } from "@/types";
 import { uploadImage } from "@/lib/upload";
 import { isValidImageUrl } from "@/lib/utils";
+import { toast } from "@/components/ui/sonner";
 
 interface ProductFormProps {
     isOpen: boolean;
@@ -64,7 +65,7 @@ export function ProductModal({ isOpen, onClose, onSubmit, initialData }: Product
 
             await onSubmit(payload);
         } catch (err: any) {
-            alert(err.message || "Erro ao fazer upload ou salvar produto");
+            toast.error(err.message || "Erro ao salvar produto");
         } finally {
             setSubmitting(false);
         }

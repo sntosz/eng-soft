@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { mapProduct, parseProductPayload, removeProductImage } from "@/lib/products";
+import { mapProduct, removeProductImage } from "@/lib/products";
 import { requireAdmin } from "@/lib/authServer";
+import { productUpdateSchema, uuidSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -20,10 +21,10 @@ export async function GET() {
     }
 
     return NextResponse.json({ products: (data || []).map(mapProduct) });
-  } catch (err: any) {
-    console.error("Error fetching products:", err.message, err);
+  } catch (err: unknown) {
+    console.error("Error fetching products:", err);
     return NextResponse.json(
-      { error: err.message || "Erro ao buscar produtos" },
+      { error: err instanceof Error ? err.message : "Erro ao buscar produtos" },
       { status: 500 }
     );
   }
@@ -35,17 +36,15 @@ export async function PUT(req: Request) {
     const { response } = await requireAdmin();
     if (response) return response;
 
-    const body = await req.json();
-    const { id, ...data } = body || {};
-
-    if (!id) {
-      return NextResponse.json({ error: "ID do produto é obrigatório" }, { status: 400 });
+    const body = await req.json().catch(() => null);
+    const parseResult = productUpdateSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: parseResult.error.errors[0]?.message || "Dados do produto inválidos" },
+        { status: 400 }
+      );
     }
-
-    const { payload, error: validationError } = parseProductPayload(data);
-    if (validationError) {
-      return NextResponse.json({ error: validationError }, { status: 400 });
-    }
+    const { id, ...payload } = parseResult.data;
 
     const { data: updated, error } = await supabaseAdmin
       .from("produtos")
@@ -57,12 +56,15 @@ export async function PUT(req: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+    if (!updated) {
+      return NextResponse.json({ error: "Produto não encontrado." }, { status: 404 });
+    }
 
     return NextResponse.json({ product: mapProduct(updated) });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error updating product:", err);
     return NextResponse.json(
-      { error: err.message || "Erro ao atualizar produto" },
+      { error: err instanceof Error ? err.message : "Erro ao atualizar produto" },
       { status: 500 }
     );
   }
@@ -75,7 +77,8 @@ export async function DELETE(req: Request) {
     if (response) return response;
 
     const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
+    const idResult = uuidSchema.safeParse(searchParams.get("id"));
+    const id = idResult.success ? idResult.data : null;
 
     if (!id) {
       return NextResponse.json({ error: "ID do produto é obrigatório" }, { status: 400 });
@@ -98,10 +101,10 @@ export async function DELETE(req: Request) {
     }
 
     return NextResponse.json({ success: true, message: "Produto excluído com sucesso" });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error deleting product:", err);
     return NextResponse.json(
-      { error: err.message || "Erro ao excluir produto" },
+      { error: err instanceof Error ? err.message : "Erro ao excluir produto" },
       { status: 500 }
     );
   }

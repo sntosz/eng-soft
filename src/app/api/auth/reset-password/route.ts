@@ -1,34 +1,19 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { hashOtpCode, hashPassword, verifyResetToken } from "@/lib/auth";
+import { resetPasswordSchema } from "@/lib/validations";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { email, code, newPassword, resetToken } = body || {};
+    const rawBody = await req.json().catch(() => ({}));
+    const parseResult = resetPasswordSchema.safeParse(rawBody);
 
-    if (!email || !code || !newPassword || !resetToken) {
-      return NextResponse.json(
-        { error: "Todos os campos são obrigatórios." },
-        { status: 400 }
-      );
+    if (!parseResult.success) {
+      const firstError = parseResult.error.errors[0]?.message || "Dados de redefinição inválidos";
+      return NextResponse.json({ error: firstError }, { status: 400 });
     }
 
-    if (typeof code !== "string" || code.trim().length !== 6) {
-      return NextResponse.json(
-        { error: "O código de verificação deve ter 6 dígitos." },
-        { status: 400 }
-      );
-    }
-
-    if (typeof newPassword !== "string" || newPassword.length < 6) {
-      return NextResponse.json(
-        { error: "A nova senha deve ter pelo menos 6 caracteres." },
-        { status: 400 }
-      );
-    }
-
-    const normalizedEmail = email.trim().toLowerCase();
+    const { email: normalizedEmail, code, newPassword, resetToken } = parseResult.data;
 
     // Valida a assinatura e validade do token JWT
     let payload: Record<string, any>;

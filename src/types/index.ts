@@ -5,6 +5,7 @@ export interface Member {
   curso: string;
   ano_turma?: string;
   ano_curso?: string; // Algumas telas usam ano_curso
+  rgm?: string | null;
   e_admin: boolean;
   senha_hash?: string;
   created_at?: string;
@@ -71,5 +72,16 @@ export interface Order {
   pronto?: boolean;
   created_at?: string;
   itens_pedido?: OrderItem[];
+}
+
+export interface JwtPayload {
+  sub?: string;
+  email?: string;
+  nome?: string;
+  curso?: string;
+  ano_curso?: string;
+  e_admin?: boolean;
+  exp?: number;
+  [key: string]: unknown;
 }
 

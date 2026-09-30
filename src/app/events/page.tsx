@@ -4,80 +4,95 @@ import { useEffect, useState } from "react";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import Image from "next/image";
 import { Calendar, MapPin, Clock, Users, Ticket, Plus, Edit2, Trash2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { Event } from "@/types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { EventModal } from "@/components/EventModal";
 import { isValidImageUrl } from "@/lib/utils";
 import { toast } from "@/components/ui/sonner";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const EventsPage = () => {
   const { user } = useCurrentUser();
   const isAdmin = user?.e_admin === true;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    async function loadEvents() {
-      try {
-        const { data, error: sbError } = await supabase
-          .from("eventos")
-          .select("*")
-          .order("data_evento", { ascending: true });
+  const loadEvents = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const res = await fetch("/api/events");
+      const data = await res.json();
 
-        if (sbError) {
-          throw sbError;
-        }
-
-        setEvents(data || []);
-      } catch (err: any) {
-        console.error("Erro ao buscar eventos:", err);
-        setError(err.message || "Erro ao buscar eventos");
-      } finally {
-        setLoading(false);
-      }
+      if (!res.ok) throw new Error(data.error || "Erro ao carregar eventos");
+      setEvents(data.events || []);
+    } catch (err: any) {
+      console.error("Erro ao buscar eventos:", err);
+      setError(err.message || "Erro ao buscar eventos");
+    } finally {
+      setLoading(false);
     }
+  };
 
+  useEffect(() => {
     loadEvents();
   }, []);
 
   const handleCreate = () => { setSelectedEvent(null); setIsModalOpen(true); };
   const handleEdit = (e: Event) => { setSelectedEvent(e); setIsModalOpen(true); };
-  const handleDelete = async (id: string) => {
-    toast("Excluir este evento?", {
-      action: {
-        label: "Excluir",
-        onClick: async () => {
-          try {
-            const { error } = await supabase.from("eventos").delete().eq("id", id);
-            if (error) throw error;
-            setEvents((prev) => prev.filter((e) => e.id !== id));
-            toast.success("Evento removido com sucesso.");
-          } catch (err: any) {
-            toast.error(err.message || "Erro ao excluir evento");
-          }
-        },
-      },
-    });
+
+  const handleDelete = (event: Event) => {
+    setEventToDelete(event);
   };
+
+  const confirmDelete = async () => {
+    if (!eventToDelete) return;
+
+    const eventId = eventToDelete.id;
+    setEventToDelete(null);
+
+    try {
+      const res = await fetch(`/api/events?id=${eventId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao excluir evento");
+
+      setEvents((prev) => prev.filter((event) => event.id !== eventId));
+      toast.success("Evento removido com sucesso.");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao excluir evento");
+    }
+  };
+
   const handleSubmit = async (data: Partial<Event>) => {
     try {
-      const formattedData = { ...data, data_evento: data.data_evento ? new Date(data.data_evento).toISOString() : new Date().toISOString() };
-      if (data.id) {
-        const { error } = await supabase.from("eventos").update(formattedData).eq("id", data.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("eventos").insert([formattedData]);
-        if (error) throw error;
-      }
+      const method = data.id ? "PUT" : "POST";
+      const res = await fetch("/api/events", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Erro ao salvar evento");
+
       setIsModalOpen(false);
-      const { data: res } = await supabase.from("eventos").select("*").order("data_evento", { ascending: true });
-      setEvents(res || []);
-      toast.success(data.id ? "Evento atualizado." : "Evento criado com sucesso.");
-    } catch(err: any) { toast.error(err.message || "Erro ao salvar evento"); }
+      await loadEvents();
+      toast.success(data.id ? "Evento atualizado com sucesso." : "Evento criado com sucesso.");
+    } catch(err: any) {
+      toast.error(err.message || "Erro ao salvar evento");
+    }
   };
 
   const EventCard = ({ event }: { event: Event }) => {
@@ -158,7 +173,7 @@ const EventsPage = () => {
         {isAdmin && (
           <div className="flex flex-col gap-2 p-4 md:border-l border-border bg-secondary/10 justify-center min-w-[120px]">
              <button onClick={() => handleEdit(event)} className="w-full border px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-secondary bg-background"><Edit2 className="w-4 h-4"/> Editar</button>
-             <button onClick={() => handleDelete(event.id)} className="w-full bg-destructive/10 text-destructive px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-destructive/20"><Trash2 className="w-4 h-4"/> Excluir</button>
+             <button onClick={() => handleDelete(event)} className="w-full bg-destructive/10 text-destructive px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-destructive/20"><Trash2 className="w-4 h-4"/> Excluir</button>
           </div>
         )}
       </div>
@@ -215,6 +230,24 @@ const EventsPage = () => {
           )}
         </div>
         <EventModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleSubmit} initialData={selectedEvent || undefined} />
+        <Dialog open={eventToDelete !== null} onOpenChange={(open) => !open && setEventToDelete(null)}>
+          <DialogContent className="max-w-md border-border bg-card">
+            <DialogHeader>
+              <DialogTitle>Excluir evento?</DialogTitle>
+              <DialogDescription>
+                Tem certeza que deseja excluir {eventToDelete?.nome ? `"${eventToDelete.nome}"` : "este evento"}? Esta ação não pode ser desfeita.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex-row justify-end gap-2 space-x-0">
+              <Button variant="outline" onClick={() => setEventToDelete(null)}>
+                Cancelar
+              </Button>
+              <Button variant="destructive" onClick={confirmDelete}>
+                Confirmar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

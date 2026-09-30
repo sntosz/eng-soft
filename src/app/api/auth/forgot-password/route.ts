@@ -2,20 +2,19 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { generateOtpCode, hashOtpCode, signResetToken } from "@/lib/auth";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { forgotPasswordSchema } from "@/lib/validations";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { email } = body || {};
+    const rawBody = await req.json().catch(() => ({}));
+    const parseResult = forgotPasswordSchema.safeParse(rawBody);
 
-    if (!email || typeof email !== "string" || !email.includes("@")) {
-      return NextResponse.json(
-        { error: "Por favor, forneça um endereço de e-mail válido." },
-        { status: 400 }
-      );
+    if (!parseResult.success) {
+      const firstError = parseResult.error.errors[0]?.message || "E-mail inválido";
+      return NextResponse.json({ error: firstError }, { status: 400 });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = parseResult.data.email;
 
     // Busca o membro no banco
     const { data: member, error } = await supabaseAdmin
