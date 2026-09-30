@@ -223,10 +223,10 @@ const LoginPage = () => {
 
             <div className="mt-6 pt-6 border-t border-border text-center">
               <p className="text-xs text-muted-foreground">
-                Ainda não é membro da Atlética?{" "}
+                Comprou o kit sócio? Solicite acesso com seu RGM:{" "}
                 <Link href="/register" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">
                   <UserPlus className="w-3.5 h-3.5" />
-                  Cadastre-se aqui
+                  Solicitar acesso
                 </Link>
               </p>
             </div>

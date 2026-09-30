@@ -1,19 +1,21 @@
 services:
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     container_name: nextjs_app
     ports:
       - "3000:3000"
     volumes:
-      # Mapeia a raiz da sua máquina para o WORKDIR /app do container
+      # Mapeia o projeto local para dentro do container
       - .:/app
-      # Evita sobreescrever os node_modules do container pelos da sua máquina
+      # ISOLA o node_modules e o cache do .next dentro do Linux do container
       - /app/node_modules
-      # Evita conflito do build do Next.js entre Windows/WSL e o container
       - /app/.next
+    env_file:
+      - .env.local
     environment:
       - NODE_ENV=development
-      # Ativa o Watchpack no Next.js para garantir que o Hot Reload funcione no WSL/Docker
+      # Força o Watchpack/Webpack a verificar alteração de arquivos no disco
       - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+      # Garanta a porta dos WebSockets para o Fast Refresh
+      - WDS_SOCKET_PORT=3000
