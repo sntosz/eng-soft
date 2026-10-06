@@ -74,6 +74,24 @@ export interface Order {
   itens_pedido?: OrderItem[];
 }
 
+export interface Ticket {
+  id: string;
+  membro_id: string;
+  evento_id: string;
+  quantidade: number;
+  preco_unitario: number;
+  total: number;
+  status: "reservado" | "pago" | "cancelado";
+  criado_em?: string;
+  eventos?: {
+    id: string;
+    nome: string;
+    data_evento: string;
+    local?: string;
+    imagem_url?: string;
+  } | null;
+}
+
 export interface JwtPayload {
   sub?: string;
   email?: string;

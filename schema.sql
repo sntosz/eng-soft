@@ -71,11 +71,28 @@ CREATE TABLE IF NOT EXISTS eventos (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- 7. Tabela de Ingressos (reservas de eventos)
+CREATE TABLE IF NOT EXISTS ingressos (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  membro_id UUID NOT NULL REFERENCES membros(id) ON DELETE CASCADE,
+  evento_id UUID NOT NULL REFERENCES eventos(id) ON DELETE CASCADE,
+  quantidade INTEGER NOT NULL CHECK (quantidade > 0),
+  preco_unitario DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+  total DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+  status TEXT NOT NULL DEFAULT 'reservado'
+    CHECK (status IN ('reservado', 'pago', 'cancelado')),
+  criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS ingressos_membro_id_idx ON ingressos (membro_id);
+CREATE INDEX IF NOT EXISTS ingressos_evento_id_idx ON ingressos (evento_id);
+
 -- Habilitar RLS (Row Level Security)
 ALTER TABLE membros ENABLE ROW LEVEL SECURITY;
 ALTER TABLE produtos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pedidos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE itens_pedido ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ingressos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE partidas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE eventos ENABLE ROW LEVEL SECURITY;
 

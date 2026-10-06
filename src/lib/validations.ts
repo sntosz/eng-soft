@@ -180,6 +180,20 @@ export const eventUpdateSchema = eventSchema.omit({ id: true }).partial().extend
   id: z.string().uuid("ID inválido"),
 });
 
+// Ingressos
+export const createTicketSchema = z.object({
+  evento_id: z.string({ required_error: "ID do evento é obrigatório" }).uuid("ID do evento inválido"),
+  quantidade: z.coerce.number().int("Quantidade deve ser um inteiro").positive("Quantidade deve ser maior que zero").max(5, "Máximo de 5 ingressos por reserva").default(1),
+});
+
+export const updateTicketStatusSchema = z.object({
+  ingresso_id: z.string({ required_error: "ID do ingresso é obrigatório" }).uuid("ID do ingresso inválido"),
+  status: z.enum(
+    ["reservado", "pago", "cancelado"],
+    { required_error: "Novo status é obrigatório", invalid_type_error: "Status do ingresso inválido" }
+  ),
+});
+
 export const productPayloadSchema = z.object({
   nome: trimmedRequiredText("Nome é obrigatório"),
   descricao: z.string().trim().nullable().optional().transform((value) => value || null),

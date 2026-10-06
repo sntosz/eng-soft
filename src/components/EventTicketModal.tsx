@@ -73,8 +73,20 @@ export function EventTicketModal({
       setSubmitting(true);
       setError(null);
 
-      // Simulação de registro / envio do pedido de ingresso
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      const res = await fetch("/api/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          evento_id: event.id,
+          quantidade: quantity,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.error || "Não foi possível reservar o ingresso.");
+      }
 
       setSuccess(true);
     } catch (err: any) {
