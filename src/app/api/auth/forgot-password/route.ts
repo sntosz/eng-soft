@@ -3,9 +3,13 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { generateOtpCode, hashOtpCode, signResetToken } from "@/lib/auth";
 import { sendPasswordResetEmail } from "@/lib/email";
 import { forgotPasswordSchema } from "@/lib/validations";
+import { getClientIp, rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
   try {
+    const ipResult = rateLimit(`forgot:ip:${getClientIp(req)}`, 20, 15 * 60_000);
+    if (!ipResult.allowed) return rateLimitResponse(ipResult.retryAfterSeconds);
+
     const rawBody = await req.json().catch(() => ({}));
     const parseResult = forgotPasswordSchema.safeParse(rawBody);
 
@@ -16,7 +20,9 @@ export async function POST(req: Request) {
 
     const normalizedEmail = parseResult.data.email;
 
-    // Busca o membro no banco
+    const emailResult = rateLimit(`forgot:email:${normalizedEmail}`, 5, 15 * 60_000);
+    if (!emailResult.allowed) return rateLimitResponse(emailResult.retryAfterSeconds);
+
     const { data: member, error } = await supabaseAdmin
       .from("membros")
       .select("id,nome,email")
@@ -38,11 +44,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // Gera código de 6 dígitos e calcula hash HMAC
     const code = generateOtpCode();
     const codeHash = hashOtpCode(code, normalizedEmail);
 
-    // Gera token JWT de sessão de recuperação (válido por 15 minutos)
     const resetToken = signResetToken(
       {
         sub: member.id,
@@ -64,7 +68,6 @@ export async function POST(req: Request) {
       success: true,
       message: "Código de verificação enviado para o seu e-mail.",
       resetToken,
-      // Em ambiente de desenvolvimento, expõe o código para facilitar testes
       devCode: process.env.NODE_ENV !== "production" ? code : undefined,
     });
   } catch (err: any) {

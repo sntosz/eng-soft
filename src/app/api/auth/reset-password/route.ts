@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { hashOtpCode, hashPassword, verifyResetToken } from "@/lib/auth";
 import { resetPasswordSchema } from "@/lib/validations";
+import { getClientIp, rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
   try {
@@ -15,7 +16,12 @@ export async function POST(req: Request) {
 
     const { email: normalizedEmail, code, newPassword, resetToken } = parseResult.data;
 
-    // Valida a assinatura e validade do token JWT
+    const ipResult = rateLimit(`reset:ip:${getClientIp(req)}`, 30, 15 * 60_000);
+    if (!ipResult.allowed) return rateLimitResponse(ipResult.retryAfterSeconds);
+
+    const emailResult = rateLimit(`reset:email:${normalizedEmail}`, 5, 15 * 60_000);
+    if (!emailResult.allowed) return rateLimitResponse(emailResult.retryAfterSeconds);
+
     let payload: Record<string, any>;
     try {
       payload = verifyResetToken(resetToken);
@@ -37,7 +43,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Verifica se o código numérico confere com o hash assinado
     const providedCodeHash = hashOtpCode(code.trim(), normalizedEmail);
     if (providedCodeHash !== payload.codeHash) {
       return NextResponse.json(
@@ -46,10 +51,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // Gera o novo hash da senha
     const newHash = await hashPassword(newPassword);
 
-    // Atualiza a senha do membro no banco de dados
     const { error: updateError } = await supabaseAdmin
       .from("membros")
       .update({ senha_hash: newHash })

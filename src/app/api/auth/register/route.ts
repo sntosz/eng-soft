@@ -2,9 +2,14 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { hashPassword } from "@/lib/auth";
 import { registerSchema } from "@/lib/validations";
+import { getClientIp, rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
   try {
+    // Limite por IP: evita flood de solicitações de acesso
+    const ipResult = rateLimit(`register:ip:${getClientIp(req)}`, 10, 60 * 60_000);
+    if (!ipResult.allowed) return rateLimitResponse(ipResult.retryAfterSeconds);
+
     const rawBody = await req.json().catch(() => ({}));
     const parseResult = registerSchema.safeParse(rawBody);
 

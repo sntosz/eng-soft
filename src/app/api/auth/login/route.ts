@@ -2,9 +2,14 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { comparePassword, signToken } from "@/lib/auth";
 import { loginSchema } from "@/lib/validations";
+import { getClientIp, rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
   try {
+    // Limite por IP: evita brute-force distribuído sobre várias contas
+    const ipResult = rateLimit(`login:ip:${getClientIp(req)}`, 30, 5 * 60_000);
+    if (!ipResult.allowed) return rateLimitResponse(ipResult.retryAfterSeconds);
+
     const rawBody = await req.json().catch(() => ({}));
     const parseResult = loginSchema.safeParse(rawBody);
 
@@ -14,6 +19,9 @@ export async function POST(req: Request) {
     }
 
     const { email, password } = parseResult.data;
+
+    const accountResult = rateLimit(`login:email:${email}`, 10, 5 * 60_000);
+    if (!accountResult.allowed) return rateLimitResponse(accountResult.retryAfterSeconds);
 
     const { data, error } = await supabaseAdmin
       .from("membros")
