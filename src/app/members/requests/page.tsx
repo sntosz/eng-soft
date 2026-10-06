@@ -5,6 +5,14 @@ import { useRouter } from "next/navigation";
 import { BadgeCheck, ClipboardCheck, Loader2, RefreshCw, ShieldAlert, XCircle } from "lucide-react";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { toast } from "@/components/ui/sonner";
 
@@ -25,6 +33,7 @@ export default function AccessRequestsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submittingId, setSubmittingId] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<{ request: AccessRequest; action: "approve" | "reject" } | null>(null);
 
   const loadRequests = useCallback(async () => {
     setLoading(true);
@@ -52,8 +61,7 @@ export default function AccessRequestsPage() {
 
   const reviewRequest = async (request: AccessRequest, action: "approve" | "reject") => {
     const verb = action === "approve" ? "aprovar" : "recusar";
-    if (!window.confirm(`Confirma ${verb} o acesso de ${request.nome} (RGM ${request.rgm})?`)) return;
-
+    setConfirming(null);
     setSubmittingId(request.id);
     try {
       const response = await fetch("/api/members/requests", {
@@ -141,7 +149,7 @@ export default function AccessRequestsPage() {
                   </dl>
                   <div className="mt-5 grid grid-cols-2 gap-2">
                     <Button
-                      onClick={() => void reviewRequest(request, "approve")}
+                      onClick={() => setConfirming({ request, action: "approve" })}
                       disabled={submittingId !== null}
                       className="gold-gradient"
                     >
@@ -150,7 +158,7 @@ export default function AccessRequestsPage() {
                     </Button>
                     <Button
                       variant="destructive"
-                      onClick={() => void reviewRequest(request, "reject")}
+                      onClick={() => setConfirming({ request, action: "reject" })}
                       disabled={submittingId !== null}
                     >
                       <XCircle className="mr-2 h-4 w-4" />
@@ -163,6 +171,29 @@ export default function AccessRequestsPage() {
           )}
         </section>
       </main>
+
+      <Dialog open={confirming !== null} onOpenChange={(open) => !open && setConfirming(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {confirming?.action === "approve" ? "Aprovar solicitação" : "Recusar solicitação"}
+            </DialogTitle>
+            <DialogDescription>
+              {confirming && `Confirma ${confirming.action === "approve" ? "aprovar" : "recusar"} o acesso de ${confirming.request.nome} (RGM ${confirming.request.rgm})?`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirming(null)}>Cancelar</Button>
+            <Button
+              variant={confirming?.action === "reject" ? "destructive" : "default"}
+              className={confirming?.action === "approve" ? "gold-gradient" : undefined}
+              onClick={() => confirming && void reviewRequest(confirming.request, confirming.action)}
+            >
+              {confirming?.action === "approve" ? "Aprovar" : "Recusar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
