@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Users, Trophy, ShoppingBag, Calendar } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 
 interface StatsData {
   members: string;
@@ -25,31 +24,23 @@ const StatsBar = () => {
 
     async function load() {
       try {
-        const [
-          { count: membersCount },
-          { count: winsCount },
-          { count: ordersCount },
-          { count: eventsCount },
-        ] = await Promise.all([
-          supabase.from("membros").select("*", { count: "exact", head: true }),
-          supabase
-            .from("partidas")
-            .select("*", { count: "exact", head: true })
-            .eq("vitoria_atletica", true),
-          supabase.from("pedidos").select("*", { count: "exact", head: true }),
-          supabase.from("eventos").select("*", { count: "exact", head: true }),
-        ]);
+        const res = await fetch("/api/stats", { cache: "no-store" });
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          throw new Error(data.error || "Erro ao carregar estatísticas.");
+        }
 
         if (mounted) {
           setStats({
-            members: membersCount != null ? String(membersCount) : "0",
-            wins: winsCount != null ? String(winsCount) : "0",
-            orders: ordersCount != null ? String(ordersCount) : "0",
-            events: eventsCount != null ? String(eventsCount) : "0",
+            members: String(data.stats?.members ?? 0),
+            wins: String(data.stats?.wins ?? 0),
+            orders: String(data.stats?.orders ?? 0),
+            events: String(data.stats?.events ?? 0),
           });
         }
       } catch (err) {
-        console.error("Falha ao carregar estatísticas do Supabase:", err);
+        console.error("Falha ao carregar estatísticas:", err);
       } finally {
         if (mounted) setLoading(false);
       }

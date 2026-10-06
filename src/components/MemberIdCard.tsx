@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Package, CheckCircle2, Clock, LogIn, Shield, ArrowRight } from "lucide-react";
 import logoAAES from "@/assets/logo-aaaes.png";
-import { supabase } from "@/lib/supabase";
 import { Order } from "@/types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -25,33 +24,16 @@ const MemberIdCard = () => {
 
       try {
         setLoadingOrders(true);
-        const { data, error } = await supabase
-          .from("pedidos")
-          .select(`
-            id,
-            membro_id,
-            status_pedido,
-            total,
-            criado_em,
-            itens_pedido (
-              quantidade,
-              preco_unitario,
-              produtos (
-                nome
-              )
-            )
-          `)
-          .eq("membro_id", user.id)
-          .order("criado_em", { ascending: false })
-          .limit(5);
+        const res = await fetch("/api/orders", { cache: "no-store" });
+        const data = await res.json().catch(() => ({}));
 
-        if (error) {
-          console.error("Erro ao buscar pedidos do membro:", error.message || error);
+        if (!res.ok) {
+          console.error("Erro ao buscar pedidos do membro:", data.error);
           return;
         }
 
-        if (mounted && data) {
-          setOrders(data as unknown as Order[]);
+        if (mounted && data.pedidos) {
+          setOrders((data.pedidos as Order[]).slice(0, 5));
         }
       } catch (err) {
         console.error("Falha ao carregar pedidos:", err);
