@@ -16,28 +16,31 @@ import {
 import logoSwe from "@/assets/logo-aaaes.png";
 import { NavLink } from "./NavLink";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useI18n } from "@/contexts/I18nContext";
+import { MessageKey } from "@/i18n/messages";
 
 interface NavItem {
   icon: LucideIcon;
-  label: string;
+  labelKey: MessageKey;
   href: string;
   adminOnly?: boolean;
   authOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
-  { icon: Home, label: "Home", href: "/" },
-  { icon: Trophy, label: "Partidas", href: "/matches" },
-  { icon: Calendar, label: "Eventos", href: "/events" },
-  { icon: ShoppingBag, label: "Loja", href: "/store" },
-  { icon: CreditCard, label: "Membros", href: "/members", adminOnly: true },
-  { icon: ClipboardCheck, label: "Solicitações", href: "/members/requests", adminOnly: true },
-  { icon: Settings, label: "Configurações", href: "/settings", authOnly: true },
+  { icon: Home, labelKey: "nav.home", href: "/" },
+  { icon: Trophy, labelKey: "nav.matches", href: "/matches" },
+  { icon: Calendar, labelKey: "nav.events", href: "/events" },
+  { icon: ShoppingBag, labelKey: "nav.store", href: "/store" },
+  { icon: CreditCard, labelKey: "nav.members", href: "/members", adminOnly: true },
+  { icon: ClipboardCheck, labelKey: "nav.requests", href: "/members/requests", adminOnly: true },
+  { icon: Settings, labelKey: "nav.settings", href: "/settings", authOnly: true },
 ];
 
 const DashboardSidebar = () => {
   const pathname = usePathname();
   const { user, isLoggedIn, loading } = useCurrentUser();
+  const { t } = useI18n();
 
   const visibleNavItems = navItems.filter((item) => {
     if (item.adminOnly) return user?.e_admin === true;
@@ -71,7 +74,7 @@ const DashboardSidebar = () => {
               }`}
             >
               <item.icon className="w-5 h-5 shrink-0 mx-auto lg:mx-0" />
-              <span className="hidden lg:block">{item.label}</span>
+              <span className="hidden lg:block">{t(item.labelKey)}</span>
             </NavLink>
           );
         })}
@@ -87,7 +90,7 @@ const DashboardSidebar = () => {
             <div className="hidden lg:block overflow-hidden">
               <p className="text-sm font-medium text-foreground truncate">{user.nome}</p>
               <p className="text-xs text-muted-foreground truncate">
-                {user.e_admin ? "Administrador" : user.curso}
+                {user.e_admin ? t("role.admin") : user.curso}
               </p>
             </div>
           </div>
