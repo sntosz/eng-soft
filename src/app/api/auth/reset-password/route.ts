@@ -43,6 +43,35 @@ export async function POST(req: Request) {
       );
     }
 
+    const { data: member, error: memberError } = await supabaseAdmin
+      .from("membros")
+      .select("id,senha_atualizada_em")
+      .eq("id", payload.sub)
+      .maybeSingle();
+
+    if (memberError || !member) {
+      return NextResponse.json(
+        { error: "Conta não encontrada para esta sessão de recuperação." },
+        { status: 404 }
+      );
+    }
+
+    // Token é single-use: se a senha já foi redefinida depois (ou no mesmo segundo)
+    // da emissão deste token, ele não pode ser reutilizado.
+    const lastResetAt = member.senha_atualizada_em
+      ? Math.floor(new Date(member.senha_atualizada_em).getTime() / 1000)
+      : 0;
+
+    if (typeof payload.iat !== "number" || payload.iat <= lastResetAt) {
+      return NextResponse.json(
+        {
+          error:
+            "Este código de verificação já foi utilizado. Solicite um novo código.",
+        },
+        { status: 400 }
+      );
+    }
+
     const providedCodeHash = hashOtpCode(code.trim(), normalizedEmail);
     if (providedCodeHash !== payload.codeHash) {
       return NextResponse.json(
@@ -55,7 +84,10 @@ export async function POST(req: Request) {
 
     const { error: updateError } = await supabaseAdmin
       .from("membros")
-      .update({ senha_hash: newHash })
+      .update({
+        senha_hash: newHash,
+        senha_atualizada_em: new Date().toISOString(),
+      })
       .eq("id", payload.sub);
 
     if (updateError) {

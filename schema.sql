@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS membros (
   ano_turma TEXT,
   e_admin BOOLEAN DEFAULT FALSE,
   senha_hash TEXT,
+  senha_atualizada_em TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
