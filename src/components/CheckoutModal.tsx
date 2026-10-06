@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Product } from "@/types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { isValidImageUrl } from "@/lib/utils";
+import { PIX_KEY, WHATSAPP_NUMBER } from "@/lib/checkoutConfig";
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -29,8 +30,8 @@ export function CheckoutModal({
   const [success, setSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const pixKey = "atletica.engsoft@unigran.br";
-  const whatsappNumber = "5567999999999"; // Número oficial da Atlética
+  const pixKey = PIX_KEY;
+  const whatsappNumber = WHATSAPP_NUMBER;
 
   useEffect(() => {
     if (isOpen) {

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Event } from "@/types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { isValidImageUrl } from "@/lib/utils";
+import { PIX_KEY, WHATSAPP_NUMBER } from "@/lib/checkoutConfig";
 
 interface EventTicketModalProps {
   isOpen: boolean;
@@ -27,8 +28,8 @@ export function EventTicketModal({
   const [success, setSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const pixKey = "atletica.engsoft@unigran.br";
-  const whatsappNumber = "5567999999999"; // Número da Atlética
+  const pixKey = PIX_KEY;
+  const whatsappNumber = WHATSAPP_NUMBER;
 
   useEffect(() => {
     if (isOpen) {
