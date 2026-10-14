@@ -7,11 +7,13 @@ import { Package, CheckCircle2, Clock, LogIn, Shield, ArrowRight } from "lucide-
 import logoAAES from "@/assets/logo-aaaes.png";
 import { Order } from "@/types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useI18n } from "@/contexts/I18nContext";
 
 const MemberIdCard = () => {
   const { user, isLoggedIn, loading: authLoading } = useCurrentUser();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     let mounted = true;
@@ -61,7 +63,7 @@ const MemberIdCard = () => {
         <div className="flex items-center gap-3">
           <Image src={logoAAES} alt="A.A.A.E.S." width={32} height={32} />
           <span className="font-display font-bold text-primary-foreground text-sm tracking-widest uppercase">
-            Carteirinha Digital de Membro
+            {t("card.title")}
           </span>
         </div>
         {isLoggedIn && user?.id && (
@@ -91,14 +93,14 @@ const MemberIdCard = () => {
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/15 text-primary">
                 {user.e_admin ? (
                   <>
-                    <Shield className="w-3 h-3" /> Administrador
+                    <Shield className="w-3 h-3" /> {t("role.admin")}
                   </>
                 ) : (
-                  "Membro Ativo"
+                  t("card.memberActive")
                 )}
               </span>
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
-                Temporada {currentYear}
+                {t("card.season", { year: currentYear })}
               </span>
             </div>
           </div>
@@ -115,7 +117,7 @@ const MemberIdCard = () => {
                 Acesso Visitante
               </span>
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
-                Temporada {currentYear}
+                {t("card.season", { year: currentYear })}
               </span>
             </div>
           </div>
@@ -126,14 +128,14 @@ const MemberIdCard = () => {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Package className="w-4 h-4 text-primary" />
-              <h4 className="text-sm font-semibold text-foreground">Pedidos Ativos</h4>
+              <h4 className="text-sm font-semibold text-foreground">{t("card.orders")}</h4>
             </div>
             {isLoggedIn && (
               <Link
                 href="/store"
                 className="text-xs text-primary hover:underline flex items-center gap-1"
               >
-                Loja Oficial <ArrowRight className="w-3 h-3" />
+                {t("card.store")} <ArrowRight className="w-3 h-3" />
               </Link>
             )}
           </div>
@@ -141,14 +143,14 @@ const MemberIdCard = () => {
           {!isLoggedIn ? (
             <div className="p-4 rounded-lg bg-muted/40 border border-border text-center space-y-3">
               <p className="text-xs text-muted-foreground">
-                Faça login para acessar sua carteirinha de associado e acompanhar seus pedidos da loja.
+                {t("card.loginHint")}
               </p>
               <Link
                 href="/login"
                 className="inline-flex items-center gap-2 gold-gradient text-primary-foreground text-xs font-semibold px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
               >
                 <LogIn className="w-3.5 h-3.5" />
-                Entrar com Conta de Membro
+                {t("card.loginCta")}
               </Link>
             </div>
           ) : loadingOrders ? (
@@ -159,13 +161,13 @@ const MemberIdCard = () => {
           ) : orders.length === 0 ? (
             <div className="px-4 py-5 rounded-lg bg-muted/30 border border-dashed border-border text-center space-y-2">
               <p className="text-xs text-muted-foreground">
-                Você não possui nenhum pedido em andamento no momento.
+                {t("card.emptyOrders")}
               </p>
               <Link
                 href="/store"
                 className="inline-block text-xs text-primary font-medium hover:underline"
               >
-                Ver produtos na loja oficial →
+                {t("card.viewStore")}
               </Link>
             </div>
           ) : (
@@ -194,12 +196,12 @@ const MemberIdCard = () => {
                 const statusText =
                   order.status ||
                   (order.status_pedido === "pronto"
-                    ? "Pronto para Retirada"
+                    ? t("card.status.ready")
                     : order.status_pedido === "entregue"
-                    ? "Entregue"
+                    ? t("card.status.delivered")
                     : order.status_pedido === "cancelado"
-                    ? "Cancelado"
-                    : "Em Preparação");
+                    ? t("store.status.canceled")
+                    : t("card.status.preparing"));
 
                 return (
                   <div

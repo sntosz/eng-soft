@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useI18n } from "@/contexts/I18nContext";
 import { toast } from "@/components/ui/sonner";
 
 interface AccessRequest {
@@ -27,6 +28,7 @@ interface AccessRequest {
 }
 
 export default function AccessRequestsPage() {
+  const { t } = useI18n();
   const { user, loading: userLoading, isLoggedIn } = useCurrentUser();
   const router = useRouter();
   const [requests, setRequests] = useState<AccessRequest[]>([]);
@@ -41,14 +43,14 @@ export default function AccessRequestsPage() {
     try {
       const response = await fetch("/api/members/requests", { cache: "no-store" });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Não foi possível carregar as solicitações.");
+      if (!response.ok) throw new Error(payload.error || t("requests.errorLoad"));
       setRequests(payload.requests);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Não foi possível carregar as solicitações.");
+      setError(err instanceof Error ? err.message : t("requests.errorLoad"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (userLoading) return;
@@ -60,7 +62,7 @@ export default function AccessRequestsPage() {
   }, [userLoading, isLoggedIn, user?.e_admin, router, loadRequests]);
 
   const reviewRequest = async (request: AccessRequest, action: "approve" | "reject") => {
-    const verb = action === "approve" ? "aprovar" : "recusar";
+    const actionError = action === "approve" ? t("requests.errorApprove") : t("requests.errorReject");
     setConfirming(null);
     setSubmittingId(request.id);
     try {
@@ -70,18 +72,18 @@ export default function AccessRequestsPage() {
         body: JSON.stringify({ id: request.id, action }),
       });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || `Não foi possível ${verb} a solicitação.`);
-      toast.success(action === "approve" ? "Membro aprovado. A conta já pode ser acessada." : "Solicitação recusada.");
+      if (!response.ok) throw new Error(payload.error || actionError);
+      toast.success(action === "approve" ? t("requests.approved") : t("requests.rejected"));
       await loadRequests();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : `Não foi possível ${verb} a solicitação.`);
+      toast.error(err instanceof Error ? err.message : actionError);
     } finally {
       setSubmittingId(null);
     }
   };
 
   if (userLoading || !isLoggedIn) {
-    return <div className="flex min-h-screen items-center justify-center">Carregando...</div>;
+    return <div className="flex min-h-screen items-center justify-center">{t("common.loading")}</div>;
   }
 
   if (!user?.e_admin) {
@@ -91,8 +93,8 @@ export default function AccessRequestsPage() {
         <main className="flex flex-1 items-center justify-center p-6">
           <div className="max-w-md text-center">
             <ShieldAlert className="mx-auto mb-3 h-8 w-8 text-destructive" />
-            <h1 className="font-display text-xl font-bold">Acesso restrito</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Esta área é exclusiva para administradores.</p>
+            <h1 className="font-display text-xl font-bold">{t("requests.restricted")}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">{t("requests.adminOnly")}</p>
           </div>
         </main>
       </div>
@@ -107,10 +109,10 @@ export default function AccessRequestsPage() {
           <div>
             <h1 className="flex items-center gap-2 font-display text-xl font-bold">
               <ClipboardCheck className="h-5 w-5 text-primary" />
-              Solicitações de acesso
+              {t("requests.listTitle")}
             </h1>
             <p className="text-sm text-muted-foreground">
-              Confira o RGM na planilha de sócios antes de aprovar.
+              {t("requests.subtitle")}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={() => void loadRequests()} disabled={loading}>
@@ -125,7 +127,7 @@ export default function AccessRequestsPage() {
             <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
           ) : requests.length === 0 ? (
             <div className="rounded-xl border border-border p-10 text-center text-muted-foreground">
-              Não há solicitações pendentes de análise.
+              {t("requests.empty")}
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -141,11 +143,11 @@ export default function AccessRequestsPage() {
                     </span>
                   </div>
                   <dl className="space-y-1 text-sm">
-                    <div className="flex gap-1"><dt className="text-muted-foreground">Curso:</dt><dd>{request.curso}</dd></div>
+                    <div className="flex gap-1"><dt className="text-muted-foreground">{t("requests.course")}</dt><dd>{request.curso}</dd></div>
                     {request.ano_turma && (
-                      <div className="flex gap-1"><dt className="text-muted-foreground">Turma/ano:</dt><dd>{request.ano_turma}</dd></div>
+                      <div className="flex gap-1"><dt className="text-muted-foreground">{t("requests.year")}</dt><dd>{request.ano_turma}</dd></div>
                     )}
-                    <div className="flex gap-1"><dt className="text-muted-foreground">Solicitado:</dt><dd>{new Date(request.criado_em).toLocaleDateString("pt-BR")}</dd></div>
+                    <div className="flex gap-1"><dt className="text-muted-foreground">{t("requests.requestedAt")}</dt><dd>{new Date(request.criado_em).toLocaleDateString("pt-BR")}</dd></div>
                   </dl>
                   <div className="mt-5 grid grid-cols-2 gap-2">
                     <Button
@@ -154,7 +156,7 @@ export default function AccessRequestsPage() {
                       className="gold-gradient"
                     >
                       {submittingId === request.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BadgeCheck className="mr-2 h-4 w-4" />}
-                      Aprovar
+                      {t("requests.approveBtn")}
                     </Button>
                     <Button
                       variant="destructive"
@@ -162,7 +164,7 @@ export default function AccessRequestsPage() {
                       disabled={submittingId !== null}
                     >
                       <XCircle className="mr-2 h-4 w-4" />
-                      Recusar
+                      {t("requests.rejectBtn")}
                     </Button>
                   </div>
                 </article>
@@ -176,20 +178,27 @@ export default function AccessRequestsPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {confirming?.action === "approve" ? "Aprovar solicitação" : "Recusar solicitação"}
+              {confirming?.action === "approve" ? t("requests.approve") : t("requests.reject")}
             </DialogTitle>
             <DialogDescription>
-              {confirming && `Confirma ${confirming.action === "approve" ? "aprovar" : "recusar"} o acesso de ${confirming.request.nome} (RGM ${confirming.request.rgm})?`}
+              {confirming &&
+                t("requests.confirmBody", {
+                  action: confirming.action === "approve"
+                    ? t("requests.approveBtn").toLowerCase()
+                    : t("requests.rejectBtn").toLowerCase(),
+                  name: confirming.request.nome,
+                  rgm: confirming.request.rgm,
+                })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirming(null)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setConfirming(null)}>{t("common.cancel")}</Button>
             <Button
               variant={confirming?.action === "reject" ? "destructive" : "default"}
               className={confirming?.action === "approve" ? "gold-gradient" : undefined}
               onClick={() => confirming && void reviewRequest(confirming.request, confirming.action)}
             >
-              {confirming?.action === "approve" ? "Aprovar" : "Recusar"}
+              {confirming?.action === "approve" ? t("requests.approveBtn") : t("requests.rejectBtn")}
             </Button>
           </DialogFooter>
         </DialogContent>

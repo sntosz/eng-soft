@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { X, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface MemberFormProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ export interface MemberData {
 }
 
 export function MemberModal({ isOpen, onClose, onSubmit, initialData, isLoading }: MemberFormProps) {
+  const { t } = useI18n();
   const [formData, setFormData] = useState<MemberData>({
     nome: "",
     email: "",
@@ -48,12 +50,12 @@ export function MemberModal({ isOpen, onClose, onSubmit, initialData, isLoading 
     setError("");
 
     if (!formData.nome || !formData.email || !formData.curso || !formData.ano_curso) {
-      setError("Nome, email, curso e ano do curso são obrigatórios");
+      setError(t("memberModal.errorRequired"));
       return;
     }
 
     if (!initialData && !formData.password) {
-      setError("Senha é obrigatória para novos membros");
+      setError(t("memberModal.errorPassword"));
       return;
     }
 
@@ -61,7 +63,7 @@ export function MemberModal({ isOpen, onClose, onSubmit, initialData, isLoading 
       await onSubmit(formData);
       onClose();
     } catch (err: any) {
-      setError(err.message || "Erro ao salvar membro");
+      setError(err.message || t("memberModal.error"));
     }
   };
 
@@ -73,7 +75,7 @@ export function MemberModal({ isOpen, onClose, onSubmit, initialData, isLoading 
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 className="text-xl font-bold text-foreground">
-            {initialData ? "Editar Membro" : "Novo Membro"}
+            {initialData ? t("memberModal.edit") : t("memberModal.new")}
           </h2>
           <button
             onClick={onClose}
@@ -92,20 +94,20 @@ export function MemberModal({ isOpen, onClose, onSubmit, initialData, isLoading 
           )}
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Nome</label>
+            <label className="text-sm font-medium text-foreground">{t("memberModal.name")}</label>
             <input
               type="text"
               value={formData.nome}
               onChange={(e) =>
                 setFormData({ ...formData, nome: e.target.value })
               }
-              placeholder="Nome completo"
+              placeholder={t("memberModal.namePlaceholder")}
               className="w-full px-3 py-2 rounded-lg border border-border bg-secondary/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Email</label>
+            <label className="text-sm font-medium text-foreground">{t("memberModal.email")}</label>
             <input
               type="email"
               value={formData.email}
@@ -118,34 +120,34 @@ export function MemberModal({ isOpen, onClose, onSubmit, initialData, isLoading 
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Curso</label>
+            <label className="text-sm font-medium text-foreground">{t("memberModal.course")}</label>
             <input
               type="text"
               value={formData.curso}
               onChange={(e) =>
                 setFormData({ ...formData, curso: e.target.value })
               }
-              placeholder="ex: Engenharia de Software"
+              placeholder={t("memberModal.coursePlaceholder")}
               className="w-full px-3 py-2 rounded-lg border border-border bg-secondary/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Ano do Curso</label>
+            <label className="text-sm font-medium text-foreground">{t("memberModal.year")}</label>
             <input
               type="text"
               value={formData.ano_curso}
               onChange={(e) =>
                 setFormData({ ...formData, ano_curso: e.target.value })
               }
-              placeholder="ex: 1º ano"
+              placeholder={t("memberModal.yearPlaceholder")}
               className="w-full px-3 py-2 rounded-lg border border-border bg-secondary/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
-              {initialData ? "Senha (deixe em branco para manter)" : "Senha"}
+              {initialData ? t("memberModal.passwordEdit") : t("memberModal.password")}
             </label>
             <div className="relative">
               <input
@@ -187,7 +189,7 @@ export function MemberModal({ isOpen, onClose, onSubmit, initialData, isLoading 
               disabled={isLoading}
               className="flex-1 gold-gradient text-primary-foreground hover:opacity-90"
             >
-              {isLoading ? "Salvando..." : initialData ? "Atualizar" : "Criar"}
+              {isLoading ? t("common.saving") : initialData ? t("memberModal.update") : t("memberModal.create")}
             </Button>
           </div>
         </form>

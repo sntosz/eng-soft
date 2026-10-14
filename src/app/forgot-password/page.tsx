@@ -26,10 +26,12 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import logoAaaes from "@/assets/logo-aaaes.png";
+import { useI18n } from "@/contexts/I18nContext";
 
 type Step = "request" | "verify_and_reset" | "success";
 
 export default function ForgotPasswordPage() {
+  const { t } = useI18n();
   const router = useRouter();
 
   // Estados do formulário
@@ -64,7 +66,7 @@ export default function ForgotPasswordPage() {
   const handleRequestCode = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!email) {
-      setError("Por favor, preencha seu e-mail.");
+      setError(t("forgot.errorFillEmail"));
       return;
     }
 
@@ -82,7 +84,7 @@ export default function ForgotPasswordPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Não foi possível enviar o código.");
+        setError(data.error || t("forgot.errorSend"));
         setLoading(false);
         return;
       }
@@ -92,12 +94,12 @@ export default function ForgotPasswordPage() {
         setDevCode(data.devCode);
       }
       setSuccessMessage(
-        "Código enviado com sucesso! Verifique sua caixa de entrada."
+        t("forgot.sent")
       );
       setStep("verify_and_reset");
       setCountdown(60); // 60 segundos de cooldown para reenvio
     } catch (err: any) {
-      setError(err.message || "Erro ao conectar com o servidor.");
+      setError(err.message || t("common.connectionError"));
     } finally {
       setLoading(false);
     }
@@ -120,7 +122,7 @@ export default function ForgotPasswordPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Não foi possível reenviar o código.");
+        setError(data.error || t("forgot.errorResend"));
         setResending(false);
         return;
       }
@@ -130,10 +132,10 @@ export default function ForgotPasswordPage() {
         setDevCode(data.devCode);
       }
       setCode("");
-      setSuccessMessage("Novo código de 6 dígitos enviado com sucesso!");
+      setSuccessMessage(t("forgot.resent"));
       setCountdown(60);
     } catch (err: any) {
-      setError(err.message || "Erro ao reenviar o código.");
+      setError(t("forgot.errorResend"));
     } finally {
       setResending(false);
     }
@@ -145,17 +147,17 @@ export default function ForgotPasswordPage() {
     setError(null);
 
     if (code.trim().length !== 6) {
-      setError("Digite o código completo de 6 dígitos.");
+      setError(t("forgot.codeIncomplete"));
       return;
     }
 
     if (newPassword.length < 6) {
-      setError("A nova senha deve ter pelo menos 6 caracteres.");
+      setError(t("forgot.errorLength"));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("As senhas digitadas não coincidem.");
+      setError(t("forgot.errorMismatch"));
       return;
     }
 
@@ -176,14 +178,14 @@ export default function ForgotPasswordPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Falha ao redefinir a senha.");
+        setError(data.error || t("forgot.errorReset"));
         setLoading(false);
         return;
       }
 
       setStep("success");
     } catch (err: any) {
-      setError(err.message || "Erro ao redefinir a senha.");
+      setError(err.message || t("forgot.errorReset"));
     } finally {
       setLoading(false);
     }
@@ -212,7 +214,7 @@ export default function ForgotPasswordPage() {
             <div className="absolute inset-0 rounded-full bg-primary/20 blur-3xl scale-110" />
             <Image
               src={logoAaaes}
-              alt="Logotipo da A.A.A.E.S. - Atlética de Engenharia de Software"
+              alt="A.A.A.E.S."
               width={320}
               height={320}
               priority
@@ -221,13 +223,13 @@ export default function ForgotPasswordPage() {
           </div>
           <div className="space-y-2">
             <p className="text-xs uppercase tracking-[0.4em] text-primary font-semibold">
-              Associação Atlética Acadêmica
+              {t("auth.assoc")}
             </p>
             <h1 className="text-4xl font-bold tracking-tight">
               Engenharia <span className="gold-text">de Software</span>
             </h1>
             <p className="text-sm text-muted-foreground italic">
-              &quot;Código. Disciplina. Domínio.&quot;
+              &quot;{t("auth.motto")}&quot;
             </p>
           </div>
         </section>
@@ -251,25 +253,24 @@ export default function ForgotPasswordPage() {
               <div className="flex items-center justify-between mb-3">
                 <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-primary font-semibold">
                   <ShieldCheck className="w-4 h-4" />
-                  <span>Recuperação de Acesso</span>
+                  <span>{t("forgot.subtitle")}</span>
                 </div>
                 <Link
                   href="/login"
                   className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors font-medium"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Voltar ao login</span>
+                  <span>{t("forgot.backToLogin")}</span>
                 </Link>
               </div>
 
               {step === "request" && (
                 <>
                   <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                    Esqueceu sua senha?
+                    {t("forgot.title")}
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    Digite seu e-mail institucional para receber o código de 6
-                    dígitos para redefinição.
+                    {t("forgot.emailHint")}
                   </p>
                 </>
               )}
@@ -277,14 +278,14 @@ export default function ForgotPasswordPage() {
               {step === "verify_and_reset" && (
                 <>
                   <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                    Código & Nova Senha
+                    {t("forgot.codeTitle")}
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    Insira o código enviado para{" "}
+                    {t("forgot.codeSentPre")}{" "}
                     <span className="font-semibold text-foreground">
                       {email}
                     </span>{" "}
-                    e defina sua nova senha.
+                    {t("forgot.codeSentPost")}
                   </p>
                 </>
               )}
@@ -295,11 +296,10 @@ export default function ForgotPasswordPage() {
                     <CheckCircle2 className="w-10 h-10" />
                   </div>
                   <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                    Senha Redefinida!
+                    {t("forgot.successTitle")}
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    Sua senha foi alterada com sucesso. Agora você já pode
-                    entrar na plataforma com as novas credenciais.
+                    {t("forgot.successBody")}
                   </p>
                 </div>
               )}
@@ -326,7 +326,7 @@ export default function ForgotPasswordPage() {
               <div className="mb-5 p-3 rounded-lg bg-secondary/80 border border-primary/40 text-xs flex items-center justify-between">
                 <div>
                   <span className="text-muted-foreground">
-                    Código de teste (Dev):{" "}
+                    {t("forgot.devCode")}{" "}
                   </span>
                   <strong className="text-primary font-mono text-sm tracking-wider">
                     {devCode}
@@ -337,7 +337,7 @@ export default function ForgotPasswordPage() {
                   onClick={() => setCode(devCode)}
                   className="text-[11px] text-primary underline hover:opacity-80 font-medium"
                 >
-                  Preencher
+                  {t("forgot.fill")}
                 </button>
               </div>
             )}
@@ -349,7 +349,7 @@ export default function ForgotPasswordPage() {
               <form onSubmit={handleRequestCode} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-foreground/80">
-                    E-mail institucional
+                    {t("forgot.email")}
                   </Label>
                   <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -374,12 +374,12 @@ export default function ForgotPasswordPage() {
                   {loading ? (
                     <div className="flex items-center gap-2">
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Enviando código...</span>
+                      <span>{t("forgot.sending")}</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <KeyRound className="w-4 h-4" />
-                      <span>Enviar Código de Verificação</span>
+                      <span>{t("forgot.send")}</span>
                     </div>
                   )}
                 </Button>
@@ -389,9 +389,9 @@ export default function ForgotPasswordPage() {
                     href="/login"
                     className="text-xs text-muted-foreground hover:text-primary transition-colors"
                   >
-                    Lembrou da senha?{" "}
+                    {t("forgot.remembered")}{" "}
                     <span className="font-semibold text-primary underline">
-                      Entrar na conta
+                      {t("forgot.enter")}
                     </span>
                   </Link>
                 </div>
@@ -407,7 +407,7 @@ export default function ForgotPasswordPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="text-foreground/80">
-                      Código de 6 dígitos
+                      {t("forgot.codeLabel")}
                     </Label>
                     <button
                       type="button"
@@ -417,7 +417,7 @@ export default function ForgotPasswordPage() {
                       }}
                       className="text-xs text-primary hover:underline"
                     >
-                      Alterar e-mail
+                      {t("forgot.changeEmail")}
                     </button>
                   </div>
 
@@ -464,14 +464,14 @@ export default function ForgotPasswordPage() {
                 {/* Nova Senha */}
                 <div className="space-y-2">
                   <Label htmlFor="newPassword" className="text-foreground/80">
-                    Nova Senha
+                    {t("forgot.newPasswordLabel")}
                   </Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       id="newPassword"
                       type={showNewPassword ? "text" : "password"}
-                      placeholder="Mínimo de 6 caracteres"
+                      placeholder={t("forgot.newPasswordPlaceholder")}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       required
@@ -482,7 +482,7 @@ export default function ForgotPasswordPage() {
                       onClick={() => setShowNewPassword((v) => !v)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       aria-label={
-                        showNewPassword ? "Ocultar senha" : "Mostrar senha"
+                        showNewPassword ? t("common.hidePassword") : t("common.showPassword")
                       }
                     >
                       {showNewPassword ? (
@@ -500,14 +500,14 @@ export default function ForgotPasswordPage() {
                     htmlFor="confirmPassword"
                     className="text-foreground/80"
                   >
-                    Confirmar Nova Senha
+                    {t("forgot.confirmPasswordLabel")}
                   </Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       id="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Repita a nova senha"
+                      placeholder={t("forgot.confirmPassword")}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
@@ -518,7 +518,7 @@ export default function ForgotPasswordPage() {
                       onClick={() => setShowConfirmPassword((v) => !v)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       aria-label={
-                        showConfirmPassword ? "Ocultar senha" : "Mostrar senha"
+                        showConfirmPassword ? t("common.hidePassword") : t("common.showPassword")
                       }
                     >
                       {showConfirmPassword ? (
@@ -539,16 +539,16 @@ export default function ForgotPasswordPage() {
                   {loading ? (
                     <div className="flex items-center gap-2">
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Atualizando senha...</span>
+                      <span>{t("forgot.submitting")}</span>
                     </div>
                   ) : (
-                    <span>Redefinir Senha</span>
+                    <span>{t("forgot.submit")}</span>
                   )}
                 </Button>
 
                 {/* Reenvio de Código */}
                 <div className="flex items-center justify-between pt-2 text-xs text-muted-foreground">
-                  <span>Não recebeu o código?</span>
+                  <span>{t("forgot.resendQuestion")}</span>
                   <button
                     type="button"
                     onClick={handleResendCode}
@@ -556,10 +556,10 @@ export default function ForgotPasswordPage() {
                     className="text-primary hover:underline font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {countdown > 0
-                      ? `Reenviar em ${countdown}s`
+                      ? t("forgot.resendIn", { s: countdown })
                       : resending
-                      ? "Enviando..."
-                      : "Reenviar código"}
+                      ? t("forgot.resending")
+                      : t("forgot.resend")}
                   </button>
                 </div>
               </form>
@@ -574,15 +574,14 @@ export default function ForgotPasswordPage() {
                   onClick={() => router.push("/login")}
                   className="w-full h-12 text-base font-semibold gold-gradient hover:opacity-90 transition-opacity"
                 >
-                  Fazer Login Agora
+                  {t("forgot.loginNow")}
                 </Button>
               </div>
             )}
           </div>
 
           <p className="text-center text-xs text-muted-foreground mt-6">
-            © {new Date().getFullYear()} A.A.A.E.S. — Todos os direitos
-            reservados.
+            © {new Date().getFullYear()} A.A.A.E.S. — {t("common.rights")}
           </p>
         </section>
       </div>

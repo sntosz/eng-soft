@@ -7,6 +7,7 @@ import { Event } from "@/types";
 import { isValidImageUrl } from "@/lib/utils";
 import { uploadImage } from "@/lib/upload";
 import { toast } from "@/components/ui/sonner";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface EventFormProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ const formatDateTimeInput = (value: string | Date = new Date()) => {
 };
 
 export function EventModal({ isOpen, onClose, onSubmit, initialData }: EventFormProps) {
+  const { t } = useI18n();
   const [formData, setFormData] = useState<Partial<Event>>({
     nome: "",
     descricao: "",
@@ -57,7 +59,7 @@ export function EventModal({ isOpen, onClose, onSubmit, initialData }: EventForm
 
   const handleSave = async () => {
     if (!formData.nome?.trim()) {
-      toast.error("Preencha o nome do evento.");
+      toast.error(t("eventModal.errorName"));
       return;
     }
 
@@ -71,7 +73,7 @@ export function EventModal({ isOpen, onClose, onSubmit, initialData }: EventForm
       }
 
       if (finalImageUrl && !isValidImageUrl(finalImageUrl)) {
-        toast.error("Selecione uma imagem válida para o evento.");
+        toast.error(t("eventModal.errorImage"));
         return;
       }
 
@@ -83,7 +85,7 @@ export function EventModal({ isOpen, onClose, onSubmit, initialData }: EventForm
         imagem_url: finalImageUrl,
       });
     } catch (err: any) {
-      toast.error(err.message || "Erro ao salvar evento");
+      toast.error(err.message || t("eventModal.error"));
     } finally {
       setSubmitting(false);
     }
@@ -96,7 +98,7 @@ export function EventModal({ isOpen, onClose, onSubmit, initialData }: EventForm
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" />
             <h2 className="font-display font-bold text-lg">
-              {initialData ? "Editar Evento" : "Novo Evento"}
+              {initialData ? t("eventModal.edit") : t("eventModal.new")}
             </h2>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-full">
@@ -106,31 +108,31 @@ export function EventModal({ isOpen, onClose, onSubmit, initialData }: EventForm
 
         <div className="p-5 overflow-y-auto space-y-4">
           <div>
-            <label className="text-sm font-medium mb-1 block">Nome do Evento *</label>
+            <label className="text-sm font-medium mb-1 block">{t("eventModal.name")}</label>
             <input
               type="text"
               required
               value={formData.nome || ""}
               onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-              placeholder="Ex: Choppada da Engenharia"
+              placeholder={t("eventModal.namePlaceholder")}
               className="w-full px-3 py-2 rounded-md border border-border bg-secondary/50 text-foreground"
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-1 block">Descrição</label>
+            <label className="text-sm font-medium mb-1 block">{t("eventModal.description")}</label>
             <textarea
               rows={3}
               value={formData.descricao || ""}
               onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-              placeholder="Detalhes sobre atrações, horários e atrações do evento..."
+              placeholder={t("eventModal.descriptionPlaceholder")}
               className="w-full px-3 py-2 rounded-md border border-border bg-secondary/50 text-foreground"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium mb-1 block">Data e Hora *</label>
+              <label className="text-sm font-medium mb-1 block">{t("eventModal.datetime")}</label>
               <input
                 type="datetime-local"
                 required
@@ -140,7 +142,7 @@ export function EventModal({ isOpen, onClose, onSubmit, initialData }: EventForm
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">Preço (R$)</label>
+              <label className="text-sm font-medium mb-1 block">{t("eventModal.price")}</label>
               <input
                 type="number"
                 step="0.01"
@@ -153,18 +155,18 @@ export function EventModal({ isOpen, onClose, onSubmit, initialData }: EventForm
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-1 block">Local</label>
+            <label className="text-sm font-medium mb-1 block">{t("eventModal.location")}</label>
             <input
               type="text"
               value={formData.local || ""}
               onChange={(e) => setFormData({ ...formData, local: e.target.value })}
-              placeholder="Ex: Arena Unigran Capital"
+              placeholder={t("eventModal.locationPlaceholder")}
               className="w-full px-3 py-2 rounded-md border border-border bg-secondary/50 text-foreground"
             />
           </div>
 
           <div className="space-y-2 pt-1 border-t border-border">
-            <label className="text-sm font-medium block">Imagem de Divulgação</label>
+            <label className="text-sm font-medium block">{t("eventModal.image")}</label>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <input
                 type="file"
@@ -178,12 +180,12 @@ export function EventModal({ isOpen, onClose, onSubmit, initialData }: EventForm
                 className="cursor-pointer text-xs flex items-center gap-1.5 px-3 py-2 rounded-md border border-border hover:bg-secondary transition-colors"
               >
                 <Upload className="w-3.5 h-3.5" />
-                {fileEvent ? fileEvent.name : "Fazer Upload de Foto"}
+                {fileEvent ? fileEvent.name : t("eventModal.upload")}
               </label>
 
               {(fileEvent || formData.imagem_url) && (
                 <span className="text-xs text-muted-foreground truncate max-w-[240px]">
-                  {fileEvent ? "Foto pronta para envio" : "Imagem já vinculada"}
+                  {fileEvent ? t("eventModal.imageReady") : t("eventModal.imageExisting")}
                 </span>
               )}
             </div>
@@ -201,7 +203,7 @@ export function EventModal({ isOpen, onClose, onSubmit, initialData }: EventForm
             className="gold-gradient text-primary-foreground flex items-center gap-2 font-semibold"
           >
             {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-            {submitting ? "Salvando..." : "Salvar Evento"}
+            {submitting ? t("common.saving") : t("eventModal.save")}
           </Button>
         </div>
       </div>

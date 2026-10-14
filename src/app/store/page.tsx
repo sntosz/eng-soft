@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import Image from "next/image";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useI18n } from "@/contexts/I18nContext";
 import { ProductModal } from "@/components/ProductModal";
 import { CheckoutModal } from "@/components/CheckoutModal";
 import { ShoppingBag, Package, Plus, Edit2, Trash2, ClipboardList, CheckCircle, Clock, AlertTriangle, RefreshCw } from "lucide-react";
@@ -13,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
 
 export default function StorePage() {
+  const { t } = useI18n();
   const { user } = useCurrentUser();
   const isAdmin = user?.e_admin === true;
 
@@ -41,13 +43,13 @@ export default function StorePage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Erro ao carregar produtos");
+        throw new Error(data.error || t("store.errorLoad"));
       }
 
       setProducts(data.products || []);
     } catch (err: any) {
       console.error("Erro ao buscar produtos:", err);
-      setError(err.message || "Erro ao buscar produtos");
+      setError(err.message || t("store.errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -59,12 +61,12 @@ export default function StorePage() {
       const res = await fetch("/api/orders");
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || "Erro ao carregar pedidos.");
+      if (!res.ok) throw new Error(data.error || t("store.errorLoadOrders"));
 
       setOrders(data.pedidos || []);
     } catch (err: any) {
       console.error("Erro ao carregar pedidos:", err);
-      toast.error(err.message || "Erro ao carregar pedidos.");
+      toast.error(err.message || t("store.errorLoadOrders"));
     } finally {
       setLoadingOrders(false);
     }
@@ -96,19 +98,19 @@ export default function StorePage() {
   };
 
   const handleDelete = async (id: string) => {
-    toast("Tem certeza que deseja excluir este produto?", {
+    toast(t("store.deleteConfirm"), {
       action: {
-        label: "Excluir",
+        label: t("common.delete"),
         onClick: async () => {
           try {
             const res = await fetch(`/api/products?id=${id}`, { method: "DELETE" });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "Erro ao excluir produto");
+            if (!res.ok) throw new Error(data.error || t("store.errorDelete"));
 
             setProducts((prev) => prev.filter((p) => p.id !== id));
-            toast.success("Produto excluído com sucesso!");
+            toast.success(t("store.deleted"));
           } catch (err: any) {
-            toast.error(err.message || "Erro ao excluir produto");
+            toast.error(err.message || t("store.errorDelete"));
           }
         },
       },
@@ -124,8 +126,8 @@ export default function StorePage() {
           body: JSON.stringify(data),
         });
         const resJson = await res.json();
-        if (!res.ok) throw new Error(resJson.error || "Erro ao atualizar produto");
-        toast.success("Produto atualizado com sucesso!");
+        if (!res.ok) throw new Error(resJson.error || t("store.errorSave"));
+        toast.success(t("store.updated"));
       } else {
         const res = await fetch("/api/products/create", {
           method: "POST",
@@ -133,13 +135,13 @@ export default function StorePage() {
           body: JSON.stringify(data),
         });
         const resJson = await res.json();
-        if (!res.ok) throw new Error(resJson.error || "Erro ao criar produto");
-        toast.success("Produto cadastrado com sucesso!");
+        if (!res.ok) throw new Error(resJson.error || t("store.errorSave"));
+        toast.success(t("store.created"));
       }
       setIsModalOpen(false);
       await loadProducts();
     } catch (err: any) {
-      toast.error(err.message || "Erro ao salvar produto");
+      toast.error(err.message || t("store.errorSave"));
     }
   };
 
@@ -158,7 +160,7 @@ export default function StorePage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Não foi possível atualizar o status.");
+        throw new Error(data.error || t("store.errorUpdate"));
       }
 
       setOrders((prev) =>
@@ -166,9 +168,9 @@ export default function StorePage() {
           ord.id === pedidoId ? { ...ord, status_pedido: novoStatus } : ord
         )
       );
-      toast.success("Status do pedido atualizado!");
+      toast.success(t("store.orderStatusUpdated"));
     } catch (err: any) {
-      toast.error(err.message || "Erro ao alterar status");
+      toast.error(err.message || t("store.errorStatus"));
     } finally {
       setUpdatingOrderId(null);
     }
@@ -183,10 +185,10 @@ export default function StorePage() {
           <div>
             <h1 className="font-display text-xl font-bold text-foreground flex items-center gap-2">
               <ShoppingBag className="w-5 h-5 text-primary" />
-              Loja Oficial
+              {t("store.title")}
             </h1>
             <p className="text-sm text-muted-foreground">
-              Produtos exclusivos da Atlética Engenharia de Software
+              {t("store.subtitle")}
             </p>
           </div>
 
@@ -200,7 +202,7 @@ export default function StorePage() {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Produtos
+                {t("store.tabProducts")}
               </button>
               <button
                 onClick={() => setActiveTab("pedidos")}
@@ -211,7 +213,7 @@ export default function StorePage() {
                 }`}
               >
                 <ClipboardList className="w-3.5 h-3.5 text-primary" />
-                Gerenciar Pedidos
+                {t("store.manageOrders")}
               </button>
             </div>
           )}
@@ -226,14 +228,14 @@ export default function StorePage() {
                     onClick={handleCreate}
                     className="gold-gradient text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 flex items-center gap-2 shadow-sm"
                   >
-                    <Plus className="w-4 h-4" /> Novo Produto
+                    <Plus className="w-4 h-4" /> {t("store.new")}
                   </button>
                 </div>
               )}
 
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <p className="text-muted-foreground">Carregando produtos...</p>
+                  <p className="text-muted-foreground">{t("store.loading")}</p>
                 </div>
               ) : error ? (
                 <div className="flex items-center justify-center py-12">
@@ -242,7 +244,7 @@ export default function StorePage() {
               ) : products.length === 0 ? (
                 <div className="flex items-center justify-center py-12 border-2 border-dashed border-border rounded-xl">
                   <p className="text-muted-foreground">
-                    Nenhum produto disponível na loja no momento.
+                    {t("store.emptyFull")}
                   </p>
                 </div>
               ) : (
@@ -276,14 +278,14 @@ export default function StorePage() {
 
                           {product.destaque && (
                             <div className="absolute top-3 right-3 bg-primary text-primary-foreground text-xs font-bold px-2.5 py-1 rounded-md shadow-md z-10">
-                              Destaque
+                              {t("store.featured")}
                             </div>
                           )}
 
                           {estoque === 0 && (
                             <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-10">
                               <span className="bg-destructive text-destructive-foreground font-bold px-4 py-2 rounded-lg transform -rotate-12 shadow-lg">
-                                ESGOTADO
+                                {t("store.soldOut")}
                               </span>
                             </div>
                           )}
@@ -314,7 +316,7 @@ export default function StorePage() {
                               onClick={() => handleBuy(product)}
                               className="gold-gradient text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                             >
-                              Comprar
+                              {t("store.buy")}
                             </button>
                           </div>
 
@@ -324,13 +326,13 @@ export default function StorePage() {
                                 onClick={() => handleEdit(product)}
                                 className="flex-1 border border-border px-2 py-1 rounded text-xs flex items-center justify-center gap-1 hover:bg-secondary transition-colors"
                               >
-                                <Edit2 className="w-3 h-3" /> Editar
+                                <Edit2 className="w-3 h-3" /> {t("common.edit")}
                               </button>
                               <button
                                 onClick={() => handleDelete(product.id)}
                                 className="flex-1 bg-destructive/10 text-destructive px-2 py-1 rounded text-xs flex items-center justify-center gap-1 hover:bg-destructive/20 transition-colors"
                               >
-                                <Trash2 className="w-3 h-3" /> Excluir
+                                <Trash2 className="w-3 h-3" /> {t("common.delete")}
                               </button>
                             </div>
                           )}
@@ -348,10 +350,10 @@ export default function StorePage() {
                 <div>
                   <h2 className="text-xl font-bold font-display flex items-center gap-2">
                     <ClipboardList className="w-5 h-5 text-primary" />
-                    Gerenciamento de Pedidos
+                    {t("store.ordersPanel")}
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    Acompanhe e altere o status dos pedidos efetuados pelos membros.
+                    {t("store.ordersSubtitle")}
                   </p>
                 </div>
                 <Button
@@ -362,17 +364,17 @@ export default function StorePage() {
                   className="flex items-center gap-2 text-xs"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${loadingOrders ? "animate-spin" : ""}`} />
-                  Atualizar Lista
+                  {t("store.refresh")}
                 </Button>
               </div>
 
               {loadingOrders ? (
                 <div className="text-center py-12 text-muted-foreground">
-                  Carregando pedidos do sistema...
+                  {t("store.loadingOrders")}
                 </div>
               ) : orders.length === 0 ? (
                 <div className="text-center py-12 border-2 border-dashed border-border rounded-xl text-muted-foreground">
-                  Nenhum pedido registrado no momento.
+                  {t("store.emptyOrders")}
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -392,7 +394,7 @@ export default function StorePage() {
                       { style: "currency", currency: "BRL" }
                     );
 
-                    const membroNome = pedido.membros?.nome || "Membro não identificado";
+                    const membroNome = pedido.membros?.nome || t("store.noMember");
                     const membroEmail = pedido.membros?.email || "—";
                     const membroCurso = pedido.membros?.curso || "";
 
@@ -422,7 +424,7 @@ export default function StorePage() {
 
                           {pedido.itens_pedido && pedido.itens_pedido.length > 0 && (
                             <div className="text-xs text-muted-foreground pt-1">
-                              <strong>Itens:</strong>{" "}
+                              <strong>{t("store.items")}</strong>{" "}
                               {pedido.itens_pedido.map((it: any) => (
                                 <span key={it.id} className="mr-2">
                                   {it.quantidade}x {it.produtos?.nome || "Produto"}
@@ -435,7 +437,7 @@ export default function StorePage() {
                         <div className="flex flex-col md:items-end gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-border">
                           <div className="text-left md:text-right">
                             <span className="text-xs text-muted-foreground block">
-                              Total do Pedido
+                              {t("checkout.total")}
                             </span>
                             <span className="font-display font-bold text-lg text-primary">
                               {totalFormatado}
@@ -445,22 +447,22 @@ export default function StorePage() {
                           {/* Seletor do Status do Pedido */}
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-medium text-muted-foreground">
-                              Status:
+                              {t("store.statusLabel")}
                             </span>
                             <select
-                              value={pedido.status_pedido || "Processando..."}
+                              value={pedido.status_pedido || t("store.status.processing")}
                               disabled={updatingOrderId === pedido.id}
                               onChange={(e) =>
                                 handleUpdateOrderStatus(pedido.id, e.target.value)
                               }
                               className="bg-background border border-border rounded-lg text-xs font-semibold px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary text-foreground cursor-pointer"
                             >
-                              <option value="Processando...">⏳ Processando...</option>
+                              <option value="Processando...">⏳ {t("store.status.processing")}</option>
                               <option value="Pago / Aguardando Retirada">
-                                🟢 Pago / Aguardando Retirada
+                                🟢 {t("store.status.paid")}
                               </option>
-                              <option value="Entregue">✅ Entregue</option>
-                              <option value="Cancelado">❌ Cancelado</option>
+                              <option value="Entregue">✅ {t("store.status.delivered")}</option>
+                              <option value="Cancelado">❌ {t("store.status.canceled")}</option>
                             </select>
                           </div>
                         </div>

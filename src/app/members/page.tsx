@@ -8,10 +8,12 @@ import DashboardSidebar from "@/components/DashboardSidebar";
 import {Button} from "@/components/ui/button";
 import {MemberModal, MemberData} from "@/components/MemberModal";
 import {useCurrentUser} from "@/hooks/useCurrentUser";
+import {useI18n} from "@/contexts/I18nContext";
 import { Member } from "@/types";
 import { toast } from "@/components/ui/sonner";
 
 const MembersPage = () => {
+    const { t } = useI18n();
     const {user, loading: userLoading, isLoggedIn} = useCurrentUser();
     const router = useRouter();
     const [members, setMembers] = useState<Member[]>([]);
@@ -32,17 +34,17 @@ const MembersPage = () => {
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.error || "Erro ao buscar membros");
+                throw new Error(data.error || t("members.errorLoad"));
             }
 
             setMembers(data.members);
         } catch (err: any) {
             console.error("Erro ao buscar membros:", err);
-            setError(err.message || "Erro ao buscar membros");
+            setError(err.message || t("members.errorLoad"));
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [t]);
 
     useEffect(() => {
         if (userLoading) return;
@@ -71,9 +73,9 @@ const MembersPage = () => {
     };
 
     const handleDeleteMember = async (id: string) => {
-        toast("Excluir este membro?", {
+        toast(t("members.deleteConfirm"), {
             action: {
-                label: "Excluir",
+                label: t("common.delete"),
                 onClick: async () => {
                     try {
                         const res = await fetch("/api/members", {
@@ -84,14 +86,14 @@ const MembersPage = () => {
 
                         const payload = await res.json().catch(() => ({}));
                         if (!res.ok) {
-                            throw new Error(payload.error || "Erro ao excluir membro");
+                            throw new Error(payload.error || t("members.errorDelete"));
                         }
 
                         await fetchMembers();
-                        toast.success("Membro removido com sucesso.");
+                        toast.success(t("members.deleted"));
                     } catch (err: any) {
-                        console.error("Erro ao excluir:", err);
-                        toast.error(err.message || "Erro ao excluir membro.");
+                        console.error(t("members.errorDelete"), err);
+                        toast.error(err.message || t("members.errorDelete"));
                     }
                 },
             },
@@ -122,7 +124,7 @@ const MembersPage = () => {
 
             if (!res.ok) {
                 const error = await res.json();
-                throw new Error(error.error || "Erro ao salvar membro");
+                throw new Error(error.error || t("members.errorSave"));
             }
 
             await fetchMembers();
@@ -144,7 +146,7 @@ const MembersPage = () => {
             <div className="flex min-h-screen bg-background">
                 <DashboardSidebar/>
                 <main className="flex-1 flex items-center justify-center">
-                    <p className="text-muted-foreground">Carregando...</p>
+                    <p className="text-muted-foreground">{t("common.loading")}</p>
                 </main>
             </div>
         );
@@ -161,13 +163,13 @@ const MembersPage = () => {
                             <ShieldAlert className="w-7 h-7 text-destructive"/>
                         </div>
                         <h1 className="font-display text-xl font-bold text-foreground">
-                            Acesso restrito
+                            {t("requests.restricted")}
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Esta área é exclusiva para administradores da atlética.
+                            {t("members.adminOnly")}
                         </p>
                         <Button asChild variant="outline" size="sm">
-                            <Link href="/">Voltar para a Home</Link>
+                            <Link href="/">{t("common.backHome")}</Link>
                         </Button>
                     </div>
                 </main>
@@ -185,10 +187,10 @@ const MembersPage = () => {
                     <div>
                         <h1 className="font-display text-xl font-bold text-foreground flex items-center gap-2">
                             <Users className="w-5 h-5 text-primary"/>
-                            Membros
+                            {t("members.title")}
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            {filteredMembers.length} membro{filteredMembers.length !== 1 ? "s" : ""} encontrado{filteredMembers.length !== 1 ? "s" : ""}
+                            {t("members.count", { count: filteredMembers.length })}
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -197,14 +199,14 @@ const MembersPage = () => {
                             className="gap-2 gold-gradient text-primary-foreground hover:opacity-90"
                         >
                             <Plus className="w-4 h-4"/>
-                            <span className="hidden sm:inline">Novo Membro</span>
+                            <span className="hidden sm:inline">{t("members.new")}</span>
                         </Button>
                         <Button
                             variant="ghost"
                             size="sm"
                             onClick={handleLogout}
                             className="gap-2 text-muted-foreground hover:text-foreground border"
-                            aria-label="Sair"
+                            aria-label={t("common.logout")}
                         >
                             <LogOut className="w-4 h-4"/>
                         </Button>
@@ -216,7 +218,7 @@ const MembersPage = () => {
                     <div className="mb-6">
                         <input
                             type="text"
-                            placeholder="Buscar por nome, email ou curso..."
+                            placeholder={t("members.search")}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full px-4 py-3 rounded-lg border border-border bg-secondary/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -226,7 +228,7 @@ const MembersPage = () => {
                     {/* Members Grid */}
                     {loading ? (
                         <div className="flex items-center justify-center py-12">
-                            <p className="text-muted-foreground">Carregando membros...</p>
+                            <p className="text-muted-foreground">{t("members.loading")}</p>
                         </div>
                     ) : error ? (
                         <div className="flex items-center justify-center py-12">
@@ -235,7 +237,7 @@ const MembersPage = () => {
                     ) : filteredMembers.length === 0 ? (
                         <div className="flex items-center justify-center py-12">
                             <p className="text-muted-foreground">
-                                {searchTerm ? "Nenhum membro encontrado." : "Nenhum membro disponível."}
+                                {searchTerm ? t("members.emptySearch") : t("members.empty")}
                             </p>
                         </div>
                     ) : (
@@ -273,12 +275,12 @@ const MembersPage = () => {
                                         <div className="flex flex-wrap gap-2 pt-2">
                       <span
                           className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/15 text-primary">
-                        Ativo
+                        {t("members.activeTag")}
                       </span>
                                             {member.e_admin && (
                                                 <span
                                                     className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-foreground">
-                          Admin
+                          {t("members.adminTag")}
                         </span>
                                             )}
                                         </div>
@@ -291,7 +293,7 @@ const MembersPage = () => {
                                                 className="w-full gap-2"
                                             >
                                                 <Edit2 className="w-4 h-4"/>
-                                                Editar
+                                                {t("common.edit")}
                                             </Button>
                                             <Button
                                                 onClick={() => handleDeleteMember(member.id)}
@@ -300,7 +302,7 @@ const MembersPage = () => {
                                                 className="w-full gap-2 mt-2"
                                             >
                                                 <Trash2 className="w-4 h-4"/>
-                                                Excluir
+                                                {t("common.delete")}
                                             </Button>
                                         </div>
                                     </div>
@@ -315,17 +317,17 @@ const MembersPage = () => {
                             <div className="grid grid-cols-3 gap-4 max-w-md">
                                 <div className="bg-card border border-border rounded-lg p-4 text-center">
                                     <p className="text-2xl font-bold text-primary">{filteredMembers.length}</p>
-                                    <p className="text-xs text-muted-foreground mt-1">Membros</p>
+                                    <p className="text-xs text-muted-foreground mt-1">{t("members.title")}</p>
                                 </div>
                                 <div className="bg-card border border-border rounded-lg p-4 text-center">
                                     <p className="text-2xl font-bold text-primary">
                                         {new Set(filteredMembers.map((m) => m.curso)).size}
                                     </p>
-                                    <p className="text-xs text-muted-foreground mt-1">Cursos</p>
+                                    <p className="text-xs text-muted-foreground mt-1">{t("members.courses")}</p>
                                 </div>
                                 <div className="bg-card border border-border rounded-lg p-4 text-center">
                                     <p className="text-2xl font-bold text-primary">{filteredMembers.length}</p>
-                                    <p className="text-xs text-muted-foreground mt-1">Ativos</p>
+                                    <p className="text-xs text-muted-foreground mt-1">{t("members.active")}</p>
                                 </div>
                             </div>
                         </div>

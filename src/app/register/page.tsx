@@ -10,10 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import logoAaaes from "@/assets/logo-aaaes.png";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function RegisterPage() {
   const router = useRouter();
   const { isLoggedIn, loading: userLoading } = useCurrentUser();
+  const { t } = useI18n();
 
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -39,13 +41,13 @@ export default function RegisterPage() {
     setError(null);
 
     if (senha !== confirmaSenha) {
-      setError("As senhas informadas não coincidem.");
+      setError(t("register.errorMismatch"));
       setLoading(false);
       return;
     }
 
     if (senha.length < 6) {
-      setError("A senha deve ter no mínimo 6 caracteres.");
+      setError(t("register.errorLength"));
       setLoading(false);
       return;
     }
@@ -66,14 +68,14 @@ export default function RegisterPage() {
 
       const json = await res.json();
       if (!res.ok) {
-        setError(json?.error || "Falha ao realizar cadastro.");
+        setError(json?.error || t("register.error"));
         setLoading(false);
         return;
       }
 
       setRequestSent(true);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erro ao conectar com o servidor.");
+      setError(err instanceof Error ? err.message : t("common.connectionError"));
     } finally {
       setLoading(false);
     }
@@ -101,23 +103,23 @@ export default function RegisterPage() {
           <header className="mb-6 text-center">
             <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-primary font-semibold mb-2">
               <UserPlus className="w-4 h-4" />
-              <span>Junte-se à Atlética</span>
+              <span>{t("register.hero")}</span>
             </div>
-            <h2 className="text-2xl font-bold">Solicitar acesso</h2>
+            <h2 className="text-2xl font-bold">{t("register.title")}</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Enviaremos sua solicitação para conferência do RGM na lista de sócios.
+              {t("register.subtitle")}
             </p>
           </header>
 
           {requestSent ? (
             <div className="rounded-xl border border-primary/30 bg-primary/10 p-6 text-center">
               <BadgeCheck className="mx-auto mb-3 h-10 w-10 text-primary" />
-              <h3 className="text-lg font-semibold">Solicitação enviada</h3>
+              <h3 className="text-lg font-semibold">{t("register.sent")}</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Vamos conferir seu RGM com a lista de sócios. Sua conta só poderá ser acessada depois da aprovação; então você poderá entrar com a senha cadastrada.
+                {t("register.hint")}
               </p>
               <Link href="/login" className="mt-5 inline-block text-sm font-semibold text-primary hover:underline">
-                Voltar para o login
+                {t("register.backToLogin")}
               </Link>
             </div>
           ) : (
@@ -131,13 +133,13 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="nome">Nome Completo</Label>
+              <Label htmlFor="nome">{t("register.name")}</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="nome"
                   type="text"
-                  placeholder="Seu nome completo"
+                  placeholder={t("register.namePlaceholder")}
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
                   required
@@ -147,7 +149,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="email">E-mail</Label>
+              <Label htmlFor="email">{t("register.email")}</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -163,7 +165,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="rgm">Número da matrícula (RGM)</Label>
+              <Label htmlFor="rgm">{t("register.rgm")}</Label>
               <div className="relative">
                 <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -171,7 +173,7 @@ export default function RegisterPage() {
                   type="text"
                   inputMode="numeric"
                   autoComplete="off"
-                  placeholder="Seu RGM conforme a carteirinha"
+                  placeholder={t("register.rgmPlaceholder")}
                   value={rgm}
                   onChange={(e) => setRgm(e.target.value)}
                   required
@@ -179,13 +181,13 @@ export default function RegisterPage() {
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                Usaremos o RGM para conferir sua carteirinha com a lista de sócios.
+                {t("register.rgmHint")}
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="curso">Curso</Label>
+                <Label htmlFor="curso">{t("register.course")}</Label>
                 <div className="relative">
                   <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -200,13 +202,13 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="anoTurma">Turma / Ano</Label>
+                <Label htmlFor="anoTurma">{t("register.year")}</Label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="anoTurma"
                     type="text"
-                    placeholder="Ex: 2024 / Turma B"
+                    placeholder={t("register.yearPlaceholder")}
                     value={anoTurma}
                     onChange={(e) => setAnoTurma(e.target.value)}
                     className="pl-10 h-11 bg-secondary/40 border-border"
@@ -217,7 +219,7 @@ export default function RegisterPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="senha">Senha</Label>
+                <Label htmlFor="senha">{t("register.password")}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -233,7 +235,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="confirmaSenha">Confirmar Senha</Label>
+                <Label htmlFor="confirmaSenha">{t("register.confirmPassword")}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -257,18 +259,18 @@ export default function RegisterPage() {
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  <span>Enviando solicitação...</span>
+                  <span>{t("register.submitting")}</span>
                 </>
               ) : (
-                <span>Solicitar acesso</span>
+                <span>{t("register.submit")}</span>
               )}
             </Button>
           </form>
 
           <p className="text-center text-xs text-muted-foreground mt-6">
-            Já tem uma conta?{" "}
+            {t("register.hasAccount")}{" "}
             <Link href="/login" className="text-primary font-semibold hover:underline">
-              Fazer login
+              {t("common.login")}
             </Link>
           </p>
           </>

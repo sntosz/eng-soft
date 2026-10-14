@@ -11,8 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import logoAaaes from "@/assets/logo-aaaes.png";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useI18n } from "@/contexts/I18nContext";
 
 const LoginPage = () => {
+  const { t } = useI18n();
   const router = useRouter();
   const { isLoggedIn, loading: userLoading, refreshUser } = useCurrentUser();
 
@@ -43,7 +45,7 @@ const LoginPage = () => {
 
       const json = await res.json();
       if (!res.ok) {
-        setError(json?.error || "Falha ao realizar login. Verifique seu e-mail e senha.");
+        setError(json?.error || t("login.error"));
         setLoading(false);
         return;
       }
@@ -53,7 +55,7 @@ const LoginPage = () => {
       router.push("/");
       router.refresh();
     } catch (err: any) {
-      setError(err.message || "Erro ao conectar com o servidor. Tente novamente.");
+      setError(err.message || t("login.errorConnection"));
     } finally {
       setLoading(false);
     }
@@ -80,7 +82,7 @@ const LoginPage = () => {
             <div className="absolute inset-0 rounded-full bg-primary/20 blur-3xl scale-110" />
             <Image
               src={logoAaaes}
-              alt="Logotipo da A.A.A.E.S. - Atlética de Engenharia de Software"
+              alt="A.A.A.E.S."
               width={320}
               height={320}
               priority
@@ -89,13 +91,13 @@ const LoginPage = () => {
           </div>
           <div className="space-y-2">
             <p className="text-xs uppercase tracking-[0.4em] text-primary font-semibold">
-              Associação Atlética Acadêmica
+              {t("auth.assoc")}
             </p>
             <h1 className="text-4xl font-bold tracking-tight">
               Engenharia <span className="gold-text">de Software</span>
             </h1>
             <p className="text-sm text-muted-foreground italic">
-              &quot;Código. Disciplina. Domínio.&quot;
+              &quot;{t("auth.motto")}&quot;
             </p>
           </div>
         </section>
@@ -116,18 +118,18 @@ const LoginPage = () => {
               <div className="flex justify-between items-center mb-3">
                 <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-primary font-semibold">
                   <ShieldCheck className="w-4 h-4" />
-                  <span>Acesso de Membro</span>
+                  <span>{t("login.subtitle")}</span>
                 </div>
                 <Link
                   href="/"
                   className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium"
                 >
-                  ← Voltar para a Home
+                  ← {t("common.backHome")}
                 </Link>
               </div>
-              <h2 className="text-3xl font-bold mb-2">Bem-vindo de volta</h2>
+              <h2 className="text-3xl font-bold mb-2">{t("login.title")}</h2>
               <p className="text-sm text-muted-foreground">
-                Entre na sua conta para acessar o painel da Atlética.
+                {t("login.subtitlePanel")}
               </p>
             </header>
 
@@ -141,7 +143,7 @@ const LoginPage = () => {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-foreground/80">
-                  E-mail institucional
+                  {t("login.email")}
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -160,13 +162,13 @@ const LoginPage = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="text-foreground/80">
-                    Senha
+                    {t("login.password")}
                   </Label>
                   <Link
                     href="/forgot-password"
                     className="text-xs text-primary hover:underline font-medium"
                   >
-                    Esqueceu a senha?
+                    {t("login.forgot")}
                   </Link>
                 </div>
                 <div className="relative">
@@ -184,7 +186,7 @@ const LoginPage = () => {
                     type="button"
                     onClick={() => setShowPassword((value) => !value)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                    aria-label={showPassword ? t("common.hidePassword") : t("common.showPassword")}
                   >
                     {showPassword ? (
                       <EyeOff className="w-4 h-4" />
@@ -201,7 +203,7 @@ const LoginPage = () => {
                   htmlFor="remember"
                   className="text-sm text-muted-foreground font-normal cursor-pointer"
                 >
-                  Manter conectado neste dispositivo
+                  {t("login.remember")}
                 </Label>
               </div>
 
@@ -213,27 +215,27 @@ const LoginPage = () => {
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Entrando no painel...</span>
+                    <span>{t("login.submitting")}</span>
                   </>
                 ) : (
-                  <span>Entrar no Painel</span>
+                  <span>{t("login.submit")}</span>
                 )}
               </Button>
             </form>
 
             <div className="mt-6 pt-6 border-t border-border text-center">
               <p className="text-xs text-muted-foreground">
-                Comprou o kit sócio? Solicite acesso com seu RGM:{" "}
+                {t("login.kitCta")}{" "}
                 <Link href="/register" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">
                   <UserPlus className="w-3.5 h-3.5" />
-                  Solicitar acesso
+                  {t("login.requestAccess")}
                 </Link>
               </p>
             </div>
           </div>
 
           <p className="text-center text-xs text-muted-foreground mt-6">
-            © {new Date().getFullYear()} A.A.A.E.S. — Todos os direitos reservados.
+            © {new Date().getFullYear()} A.A.A.E.S. — {t("common.rights")}
           </p>
         </section>
       </div>

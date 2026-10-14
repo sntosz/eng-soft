@@ -9,10 +9,12 @@ import logoLaw from "@/assets/logo-law.png";
 import { supabase } from "@/lib/supabase";
 import { Match } from "@/types";
 import { isValidImageUrl } from "@/lib/utils";
+import { useI18n } from "@/contexts/I18nContext";
 
 const UpcomingMatch = () => {
   const [match, setMatch] = useState<Match | null>(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useI18n();
 
   useEffect(() => {
     let mounted = true;
@@ -65,23 +67,23 @@ const UpcomingMatch = () => {
           <Trophy className="w-6 h-6 text-primary" />
         </div>
         <div>
-          <h4 className="font-display font-bold text-foreground">Sem Jogos Agendados</h4>
+          <h4 className="font-display font-bold text-foreground">{t("match.empty.title")}</h4>
           <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-            Nenhuma partida futura marcada no momento. Acompanhe os resultados e o histórico da atlética.
+            {t("match.empty.subtitle")}
           </p>
         </div>
         <Link
           href="/matches"
           className="text-xs text-primary font-medium hover:underline flex items-center gap-1 pt-1"
         >
-          Ver histórico de partidas <ArrowRight className="w-3 h-3" />
+          {t("match.empty.history")} <ArrowRight className="w-3 h-3" />
         </Link>
       </div>
     );
   }
 
-  const home = match.time_casa || "Time da Casa";
-  const away = match.time_visitante || "Visitante";
+  const home = match.time_casa || t("matchModal.homeTeam");
+  const away = match.time_visitante || t("home.visitor");
   const dateObj = new Date(match.data_partida);
   const dateLabel = dateObj.toLocaleDateString("pt-BR", {
     day: "2-digit",
@@ -102,13 +104,13 @@ const UpcomingMatch = () => {
       <div className="flex items-center justify-between">
         <h4 className="font-display font-bold text-foreground flex items-center gap-2">
           <Trophy className="w-4 h-4 text-primary" />
-          Próxima Partida
+          {t("match.next")}
         </h4>
         <Link
           href="/matches"
           className="text-xs text-primary hover:underline flex items-center gap-1 font-medium"
         >
-          Ver todas <ArrowRight className="w-3 h-3" />
+          {t("match.seeAll")} <ArrowRight className="w-3 h-3" />
         </Link>
       </div>
 
@@ -132,7 +134,7 @@ const UpcomingMatch = () => {
         <div className="flex flex-col items-center gap-1 px-3">
           <span className="font-display text-2xl md:text-3xl font-bold text-primary">VS</span>
           <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">
-            Confronto
+            {t("match.confronto")}
           </span>
         </div>
 

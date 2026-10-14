@@ -9,7 +9,7 @@ const DEFAULT_LANGUAGE: Language = "pt-BR";
 interface I18nContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: MessageKey) => string;
+  t: (key: MessageKey, vars?: Record<string, string | number>) => string;
 }
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
@@ -37,7 +37,15 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const t = useCallback(
-    (key: MessageKey) => messages[language][key] ?? messages[DEFAULT_LANGUAGE][key] ?? key,
+    (key: MessageKey, vars?: Record<string, string | number>) => {
+      let text = messages[language][key] ?? messages[DEFAULT_LANGUAGE][key] ?? key;
+      if (vars) {
+        for (const [name, value] of Object.entries(vars)) {
+          text = text.split(`{${name}}`).join(String(value));
+        }
+      }
+      return text;
+    },
     [language]
   );
 

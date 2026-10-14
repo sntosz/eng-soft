@@ -7,6 +7,7 @@ import { Product } from "@/types";
 import { uploadImage } from "@/lib/upload";
 import { isValidImageUrl } from "@/lib/utils";
 import { toast } from "@/components/ui/sonner";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface ProductFormProps {
     isOpen: boolean;
@@ -16,6 +17,7 @@ interface ProductFormProps {
 }
 
 export function ProductModal({ isOpen, onClose, onSubmit, initialData }: ProductFormProps) {
+  const { t } = useI18n();
     const [formData, setFormData] = useState<Partial<Product>>({
         nome: "",
         descricao: "",
@@ -65,7 +67,7 @@ export function ProductModal({ isOpen, onClose, onSubmit, initialData }: Product
 
             await onSubmit(payload);
         } catch (err: any) {
-            toast.error(err.message || "Erro ao salvar produto");
+            toast.error(err.message || t("productModal.error"));
         } finally {
             setSubmitting(false);
         }
@@ -76,7 +78,7 @@ export function ProductModal({ isOpen, onClose, onSubmit, initialData }: Product
             <div className="bg-card w-full max-w-md rounded-xl border border-border shadow-lg overflow-hidden flex flex-col max-h-[90vh]">
                 <div className="flex items-center justify-between p-4 border-b border-border">
                     <h2 className="font-display font-bold text-lg">
-                        {initialData ? "Editar Produto" : "Novo Produto"}
+                        {initialData ? t("productModal.edit") : t("productModal.new")}
                     </h2>
                     <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-full">
                         <X className="w-4 h-4" />
@@ -85,7 +87,7 @@ export function ProductModal({ isOpen, onClose, onSubmit, initialData }: Product
 
                 <div className="p-4 overflow-y-auto space-y-4">
                     <div>
-                        <label className="text-sm font-medium mb-1 block">Nome</label>
+                        <label className="text-sm font-medium mb-1 block">{t("productModal.name")}</label>
                         <input
                             type="text"
                             value={formData.nome || ""}
@@ -95,7 +97,7 @@ export function ProductModal({ isOpen, onClose, onSubmit, initialData }: Product
                     </div>
 
                     <div>
-                        <label className="text-sm font-medium mb-1 block">Descrição</label>
+                        <label className="text-sm font-medium mb-1 block">{t("productModal.description")}</label>
                         <textarea
                             value={formData.descricao || ""}
                             onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
@@ -105,7 +107,7 @@ export function ProductModal({ isOpen, onClose, onSubmit, initialData }: Product
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="text-sm font-medium mb-1 block">Preço (R$)</label>
+                            <label className="text-sm font-medium mb-1 block">{t("productModal.price")}</label>
                             <input
                                 type="text"
                                 inputMode="numeric"
@@ -119,7 +121,7 @@ export function ProductModal({ isOpen, onClose, onSubmit, initialData }: Product
                             />
                         </div>
                         <div>
-                            <label className="text-sm font-medium mb-1 block">Estoque</label>
+                            <label className="text-sm font-medium mb-1 block">{t("productModal.stock")}</label>
                             <input
                                 type="number"
                                 value={formData.estoque || 0}
@@ -142,11 +144,11 @@ export function ProductModal({ isOpen, onClose, onSubmit, initialData }: Product
                             className="cursor-pointer text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border hover:bg-secondary transition-colors"
                         >
                             <Upload className="w-3.5 h-3.5" />
-                            {fileProduct ? fileProduct.name : "Selecionar Imagem"}
+                            {fileProduct ? fileProduct.name : t("productModal.selectImage")}
                         </label>
                         {(fileProduct || formData.imagem_url) && (
                             <span className="text-xs text-muted-foreground truncate max-w-[200px] block mt-1">
-                {fileProduct ? "Pronto para envio" : "Imagem já cadastrada"}
+                {fileProduct ? t("productModal.imageReady") : t("productModal.imageExisting")}
               </span>
                         )}
                     </div>
@@ -160,7 +162,7 @@ export function ProductModal({ isOpen, onClose, onSubmit, initialData }: Product
                             className="w-4 h-4 rounded border-border text-primary focus:ring-primary bg-secondary/50 cursor-pointer"
                         />
                         <label htmlFor="destaque" className="text-sm font-medium cursor-pointer">
-                            Produto em Destaque
+                            {t("productModal.featured")}
                         </label>
                     </div>
                 </div>
@@ -175,7 +177,7 @@ export function ProductModal({ isOpen, onClose, onSubmit, initialData }: Product
                         className="gold-gradient text-primary-foreground flex items-center gap-2"
                     >
                         {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                        {submitting ? "Salvando..." : "Salvar"}
+                        {submitting ? t("common.saving") : t("common.save")}
                     </Button>
                 </div>
             </div>

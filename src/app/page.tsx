@@ -9,9 +9,11 @@ import StatsBar from "@/components/StatsBar";
 import UpcomingMatch from "@/components/UpcomingMatch";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useI18n } from "@/contexts/I18nContext";
 
 const HomePage = () => {
   const { user, isLoggedIn, logout } = useCurrentUser();
+  const { t } = useI18n();
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -22,14 +24,14 @@ const HomePage = () => {
           <div>
             { isLoggedIn && user ? (
               <h1 className="font-display text-xl font-bold text-foreground">
-                Bem-vindo de volta, <span className="gold-text">{user.nome}</span>
+                {t("home.welcomeBack")} <span className="gold-text">{user.nome}</span>
               </h1>) : (
                 <h1 className="font-display text-xl font-bold text-foreground">
-                  Seja bem-vindo, <span className="gold-text">Visitante</span>
+                  {t("home.welcomeVisitor")} <span className="gold-text">{t("home.visitor")}</span>
                 </h1>
             )
             }
-            <p className="text-sm text-muted-foreground">Atlética Engenharia de Software — Temporada {new Date().getFullYear()}</p>
+            <p className="text-sm text-muted-foreground">{t("home.season", { year: new Date().getFullYear() })}</p>
           </div>
           <div className="flex items-center gap-3">
 
@@ -40,7 +42,7 @@ const HomePage = () => {
                   size="sm"
                   onClick={logout}
                   className="gap-2 text-muted-foreground hover:text-foreground border"
-                  aria-label="Sair"
+                  aria-label={t("common.logout")}
                 >
                   <LogOut className="w-4 h-4" />
                 </Button>
@@ -49,7 +51,7 @@ const HomePage = () => {
               <Button asChild size="sm" className="gap-2 gold-gradient text-primary-foreground hover:opacity-90">
                 <Link href="/login" className="flex items-center gap-2">
                   <LogIn className="w-4 h-4" />
-                  <span>Entrar</span>
+                  <span>{t("common.enter")}</span>
                 </Link>
               </Button>
             )}

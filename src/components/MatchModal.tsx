@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Match } from "@/types";
 import { uploadImage } from "@/lib/upload";
 import { isValidImageUrl } from "@/lib/utils";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface MatchFormProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ const formatToLocalDateTimeInput = (dateStr?: string) => {
 };
 
 export function MatchModal({ isOpen, onClose, onSubmit, initialData }: MatchFormProps) {
+  const { t } = useI18n();
   const [formData, setFormData] = useState<MatchFormState>({
     time_casa: "",
     time_visitante: "",
@@ -108,7 +110,7 @@ export function MatchModal({ isOpen, onClose, onSubmit, initialData }: MatchForm
 
       await onSubmit(payload);
     } catch (err: any) {
-      alert(err.message || "Erro ao salvar a partida");
+      alert(err.message || t("matchModal.error"));
     } finally {
       setSubmitting(false);
     }
@@ -122,7 +124,7 @@ export function MatchModal({ isOpen, onClose, onSubmit, initialData }: MatchForm
         >
           <div className="flex items-center justify-between p-4 border-b border-border">
             <h2 className="font-display font-bold text-lg">
-              {initialData ? "Editar Partida" : "Nova Partida"}
+              {initialData ? t("matchModal.edit") : t("matchModal.new")}
             </h2>
             <Button
                 type="button"
@@ -137,7 +139,7 @@ export function MatchModal({ isOpen, onClose, onSubmit, initialData }: MatchForm
 
           <div className="p-4 overflow-y-auto space-y-4">
             <div className="p-3 border border-border rounded-lg space-y-2">
-              <label className="text-sm font-medium block text-primary">Time da Casa</label>
+              <label className="text-sm font-medium block text-primary">{t("matchModal.homeTeam")}</label>
               <input
                   type="text"
                   required
@@ -159,18 +161,18 @@ export function MatchModal({ isOpen, onClose, onSubmit, initialData }: MatchForm
                     className="cursor-pointer text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border hover:bg-secondary transition-colors"
                 >
                   <Upload className="w-3.5 h-3.5" />
-                  {fileCasa ? fileCasa.name : "Selecionar Logo"}
+                  {fileCasa ? fileCasa.name : t("matchModal.selectLogo")}
                 </label>
                 {(fileCasa || formData.foto_casa) && (
                     <span className="text-xs text-muted-foreground truncate max-w-[200px]">
-                  {fileCasa ? "Pronto para envio" : "Imagem já cadastrada"}
+                  {fileCasa ? t("matchModal.imageReady") : t("matchModal.imageExisting")}
                 </span>
                 )}
               </div>
             </div>
 
             <div className="p-3 border border-border rounded-lg space-y-2">
-              <label className="text-sm font-medium block text-destructive">Time Visitante</label>
+              <label className="text-sm font-medium block text-destructive">{t("matchModal.awayTeam")}</label>
               <input
                   type="text"
                   required
@@ -192,11 +194,11 @@ export function MatchModal({ isOpen, onClose, onSubmit, initialData }: MatchForm
                     className="cursor-pointer text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border hover:bg-secondary transition-colors"
                 >
                   <Upload className="w-3.5 h-3.5" />
-                  {fileVisitante ? fileVisitante.name : "Selecionar Logo"}
+                  {fileVisitante ? fileVisitante.name : t("matchModal.selectLogo")}
                 </label>
                 {(fileVisitante || formData.foto_visitante) && (
                     <span className="text-xs text-muted-foreground truncate max-w-[200px]">
-                  {fileVisitante ? "Pronto para envio" : "Imagem já cadastrada"}
+                  {fileVisitante ? t("matchModal.imageReady") : t("matchModal.imageExisting")}
                 </span>
                 )}
               </div>
@@ -204,7 +206,7 @@ export function MatchModal({ isOpen, onClose, onSubmit, initialData }: MatchForm
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium mb-1 block">Data e Hora</label>
+                <label className="text-sm font-medium mb-1 block">{t("matchModal.datetime")}</label>
                 <input
                     type="datetime-local"
                     required
@@ -214,7 +216,7 @@ export function MatchModal({ isOpen, onClose, onSubmit, initialData }: MatchForm
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1 block">Local</label>
+                <label className="text-sm font-medium mb-1 block">{t("matchModal.location")}</label>
                 <input
                     type="text"
                     required
@@ -238,7 +240,7 @@ export function MatchModal({ isOpen, onClose, onSubmit, initialData }: MatchForm
                   Vitória do time da casa ({formData.time_casa || "Casa"})
                 </span>
                   <span className="text-xs text-muted-foreground">
-                  Marque se a partida já encerrou com vitória da casa
+                  {t("matchModal.wonNote")}
                 </span>
                 </div>
               </label>
@@ -255,7 +257,7 @@ export function MatchModal({ isOpen, onClose, onSubmit, initialData }: MatchForm
                 className="gold-gradient text-primary-foreground flex items-center gap-2"
             >
               {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {submitting ? "Salvando..." : "Salvar"}
+              {submitting ? t("common.saving") : t("common.save")}
             </Button>
           </div>
         </form>

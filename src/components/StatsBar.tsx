@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Users, Trophy, ShoppingBag, Calendar } from "lucide-react";
+import { useI18n } from "@/contexts/I18nContext";
+import { MessageKey } from "@/i18n/messages";
 
 interface StatsData {
   members: string;
@@ -18,6 +20,7 @@ const StatsBar = () => {
     events: "—",
   });
   const [loading, setLoading] = useState(true);
+  const { t } = useI18n();
 
   useEffect(() => {
     let mounted = true;
@@ -52,18 +55,18 @@ const StatsBar = () => {
     };
   }, []);
 
-  const statItems = [
-    { icon: Users, label: "Membros Associados", value: stats.members },
-    { icon: Trophy, label: "Vitórias no Ano", value: stats.wins },
-    { icon: ShoppingBag, label: "Pedidos Realizados", value: stats.orders },
-    { icon: Calendar, label: "Eventos Oficiais", value: stats.events },
+  const statItems: { icon: typeof Users; labelKey: MessageKey; value: string }[] = [
+    { icon: Users, labelKey: "stats.members", value: stats.members },
+    { icon: Trophy, labelKey: "stats.wins", value: stats.wins },
+    { icon: ShoppingBag, labelKey: "stats.orders", value: stats.orders },
+    { icon: Calendar, labelKey: "stats.events", value: stats.events },
   ];
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       {statItems.map((s) => (
         <div
-          key={s.label}
+          key={s.labelKey}
           className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 card-glow transition-all hover:border-primary/40"
         >
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -77,7 +80,7 @@ const StatsBar = () => {
                 s.value
               )}
             </p>
-            <p className="text-xs text-muted-foreground truncate">{s.label}</p>
+            <p className="text-xs text-muted-foreground truncate">{t(s.labelKey)}</p>
           </div>
         </div>
       ))}

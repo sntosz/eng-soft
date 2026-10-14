@@ -8,6 +8,7 @@ import logoSwe from "@/assets/logo-swe.png";
 import logoLaw from "@/assets/logo-law.png";
 import { Match } from "@/types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useI18n } from "@/contexts/I18nContext";
 import { MatchModal } from "@/components/MatchModal";
 import { isValidImageUrl } from "@/lib/utils";
 import { toast } from "@/components/ui/sonner";
@@ -23,6 +24,7 @@ import {
 
 const MatchesPage = () => {
   const { user } = useCurrentUser();
+  const { t } = useI18n();
   const isAdmin = user?.e_admin === true;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
@@ -38,11 +40,11 @@ const MatchesPage = () => {
       const res = await fetch("/api/matches");
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || "Erro ao buscar partidas");
+      if (!res.ok) throw new Error(data.error || t("matches.errorLoad"));
       setMatches(data.matches || []);
     } catch (err: any) {
       console.error("Erro ao buscar partidas:", err);
-      setError(err.message || "Erro ao buscar partidas");
+      setError(err.message || t("matches.errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -75,12 +77,12 @@ const MatchesPage = () => {
     try {
       const res = await fetch(`/api/matches?id=${matchId}`, { method: "DELETE" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Erro ao excluir partida");
+      if (!res.ok) throw new Error(data.error || t("matches.errorDelete"));
 
       setMatches((prev) => prev.filter((match) => match.id !== matchId));
-      toast.success("Partida excluída com sucesso.");
+      toast.success(t("matches.deleted"));
     } catch (err: any) {
-      toast.error(err.message || "Erro ao excluir partida");
+      toast.error(err.message || t("matches.errorDelete"));
     }
   };
 
@@ -94,13 +96,13 @@ const MatchesPage = () => {
       });
 
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Erro ao salvar partida");
+      if (!res.ok) throw new Error(json.error || t("matches.errorSave"));
 
-      toast.success(data.id ? "Partida atualizada com sucesso!" : "Partida criada com sucesso!");
+      toast.success(data.id ? t("matches.updated") : t("matches.created"));
       setIsModalOpen(false);
       await loadMatches();
     } catch (err: any) {
-      toast.error(err.message || "Erro ao salvar a partida");
+      toast.error(err.message || t("matchModal.error"));
     }
   };
 
@@ -111,8 +113,8 @@ const MatchesPage = () => {
       .reverse();
 
   const MatchCard = ({ match, isPast }: { match: Match; isPast: boolean }) => {
-    const home = typeof match.time_casa === "string" ? match.time_casa : "Time da Casa";
-    const away = typeof match.time_visitante === "string" ? match.time_visitante : "Visitante";
+    const home = typeof match.time_casa === "string" ? match.time_casa : t("matchModal.homeTeam");
+    const away = typeof match.time_visitante === "string" ? match.time_visitante : t("home.visitor");
     const date = new Date(match.data_partida);
     const casaGanhou = Boolean(match.vitoria_atletica);
 
@@ -137,7 +139,7 @@ const MatchesPage = () => {
             </span>
               <span className="flex items-center gap-1.5">
               <MapPin className="w-4 h-4 text-primary" />
-                {match.local_partida || "Arena Principal"}
+                {match.local_partida || t("matches.defaultLocation")}
             </span>
             </div>
 
@@ -149,7 +151,7 @@ const MatchesPage = () => {
                             : "bg-destructive/10 text-destructive border border-destructive/20"
                     }`}
                 >
-              {casaGanhou ? "Vitória da Casa" : "Derrota da Casa"}
+              {casaGanhou ? t("matches.homeWin") : t("matches.homeLoss")}
             </span>
             ) : (
                 <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider gold-gradient text-primary-foreground">
@@ -230,13 +232,13 @@ const MatchesPage = () => {
                     onClick={() => handleEdit(match)}
                     className="border border-border px-3 py-1 rounded text-xs flex items-center gap-1 hover:bg-secondary transition-colors"
                 >
-                  <Edit2 className="w-3 h-3" /> Editar
+                  <Edit2 className="w-3 h-3" /> {t("common.edit")}
                 </button>
                 <button
                     onClick={() => handleDelete(match)}
                     className="bg-destructive/10 text-destructive px-3 py-1 rounded text-xs flex items-center gap-1 hover:bg-destructive/20 transition-colors"
                 >
-                  <Trash2 className="w-3 h-3" /> Excluir
+                  <Trash2 className="w-3 h-3" /> {t("common.delete")}
                 </button>
               </div>
           )}
@@ -253,10 +255,10 @@ const MatchesPage = () => {
             <div>
               <h1 className="font-display text-xl font-bold text-foreground flex items-center gap-2">
                 <Trophy className="w-5 h-5 text-primary" />
-                Partidas
+                {t("matches.title")}
               </h1>
               <p className="text-sm text-muted-foreground">
-                Acompanhe o calendário e resultados dos jogos da atlética
+                {t("matches.subtitle")}
               </p>
             </div>
           </header>
@@ -268,14 +270,14 @@ const MatchesPage = () => {
                       onClick={handleCreate}
                       className="gold-gradient text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 flex items-center gap-2"
                   >
-                    <Plus className="w-4 h-4" /> Nova Partida
+                    <Plus className="w-4 h-4" /> {t("matches.new")}
                   </button>
                 </div>
             )}
 
             {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <p className="text-muted-foreground">Carregando partidas...</p>
+                  <p className="text-muted-foreground">{t("matches.loading")}</p>
                 </div>
             ) : error ? (
                 <div className="flex items-center justify-center py-12">
@@ -287,7 +289,7 @@ const MatchesPage = () => {
                       <section>
                         <h2 className="font-display text-2xl font-bold mb-6 flex items-center gap-2">
                           <span className="w-2 h-8 gold-gradient rounded-full inline-block"></span>
-                          Próximos Jogos
+                          {t("matches.upcoming")}
                         </h2>
                         <div className="space-y-6">
                           {upcomingMatches.map((m) => (
@@ -301,7 +303,7 @@ const MatchesPage = () => {
                       <section>
                         <h2 className="font-display text-2xl font-bold mb-6 text-muted-foreground flex items-center gap-2">
                           <span className="w-2 h-8 bg-muted rounded-full inline-block"></span>
-                          Resultados Anteriores
+                          {t("matches.results")}
                         </h2>
                         <div className="space-y-6 opacity-90">
                           {pastMatches.map((m) => (
@@ -313,7 +315,7 @@ const MatchesPage = () => {
 
                   {matches.length === 0 && (
                       <div className="flex items-center justify-center py-12 border-2 border-dashed border-border rounded-xl">
-                        <p className="text-muted-foreground">Nenhuma partida registrada no sistema.</p>
+                        <p className="text-muted-foreground">{t("matches.empty")}</p>
                       </div>
                   )}
                 </>
@@ -329,17 +331,17 @@ const MatchesPage = () => {
           <Dialog open={matchToDelete !== null} onOpenChange={(open) => !open && setMatchToDelete(null)}>
             <DialogContent className="max-w-md border-border bg-card">
               <DialogHeader>
-                <DialogTitle>Excluir partida?</DialogTitle>
+                <DialogTitle>{t("matches.deleteConfirm")}</DialogTitle>
                 <DialogDescription>
-                  Tem certeza que deseja excluir esta partida? Esta ação não pode ser desfeita.
+                  {t("matches.deleteBody")}
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter className="flex-row justify-end gap-2 space-x-0">
                 <Button variant="outline" onClick={() => setMatchToDelete(null)}>
-                  Cancelar
+                  {t("common.cancel")}
                 </Button>
                 <Button variant="destructive" onClick={confirmDelete}>
-                  Confirmar
+                  {t("common.confirm")}
                 </Button>
               </DialogFooter>
             </DialogContent>

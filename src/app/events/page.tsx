@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Calendar, MapPin, Clock, Users, Ticket, Plus, Edit2, Trash2 } from "lucide-react";
 import { Event } from "@/types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useI18n } from "@/contexts/I18nContext";
 import { EventModal } from "@/components/EventModal";
 import { isValidImageUrl } from "@/lib/utils";
 import { toast } from "@/components/ui/sonner";
@@ -21,6 +22,7 @@ import {
 
 const EventsPage = () => {
   const { user } = useCurrentUser();
+  const { t } = useI18n();
   const isAdmin = user?.e_admin === true;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -36,11 +38,11 @@ const EventsPage = () => {
       const res = await fetch("/api/events");
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || "Erro ao carregar eventos");
+      if (!res.ok) throw new Error(data.error || t("events.errorLoad"));
       setEvents(data.events || []);
     } catch (err: any) {
       console.error("Erro ao buscar eventos:", err);
-      setError(err.message || "Erro ao buscar eventos");
+      setError(err.message || t("events.errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -66,12 +68,12 @@ const EventsPage = () => {
     try {
       const res = await fetch(`/api/events?id=${eventId}`, { method: "DELETE" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Erro ao excluir evento");
+      if (!res.ok) throw new Error(data.error || t("events.errorDelete"));
 
       setEvents((prev) => prev.filter((event) => event.id !== eventId));
-      toast.success("Evento removido com sucesso.");
+      toast.success(t("events.deleted"));
     } catch (err: any) {
-      toast.error(err.message || "Erro ao excluir evento");
+      toast.error(err.message || t("events.errorDelete"));
     }
   };
 
@@ -85,19 +87,19 @@ const EventsPage = () => {
       });
 
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Erro ao salvar evento");
+      if (!res.ok) throw new Error(json.error || t("events.errorSave"));
 
       setIsModalOpen(false);
       await loadEvents();
-      toast.success(data.id ? "Evento atualizado com sucesso." : "Evento criado com sucesso.");
+      toast.success(data.id ? t("events.updated") : t("events.created"));
     } catch(err: any) {
-      toast.error(err.message || "Erro ao salvar evento");
+      toast.error(err.message || t("events.errorSave"));
     }
   };
 
   const EventCard = ({ event }: { event: Event }) => {
     const date = new Date(event.data_evento);
-    const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    const monthNames = t("events.months").split(",");
 
     const hasValidImage = isValidImageUrl(event.imagem_url);
 
@@ -135,13 +137,13 @@ const EventsPage = () => {
                 </span>
               ) : (
                 <span className="font-bold text-secondary-foreground bg-secondary px-3 py-1 rounded-full text-sm">
-                  Gratuito
+                  {t("events.free")}
                 </span>
               )}
             </div>
 
             <p className="text-sm text-muted-foreground line-clamp-2 mb-6">
-              {event.descricao || "Participe de mais um evento incrível da nossa atlética."}
+              {event.descricao || t("events.defaultDesc")}
             </p>
           </div>
 
@@ -152,28 +154,28 @@ const EventsPage = () => {
             </span>
             <span className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-primary" />
-              <span className="truncate">{event.local || "Local a definir"}</span>
+              <span className="truncate">{event.local || t("events.defaultLocation")}</span>
             </span>
             <span className="flex items-center gap-2 md:col-span-2 mt-4">
               <button
                 type="button"
                 onClick={() => {
-                  toast.info("Solicitação registrada", {
-                    description: "Fale com a atlética para confirmar a sua reserva de ingresso.",
+                  toast.info(t("events.registered"), {
+                    description: t("events.ticketHint"),
                   });
                 }}
                 className="gold-gradient text-primary-foreground px-6 py-2 rounded-lg font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity w-full sm:w-auto justify-center"
               >
                 <Ticket className="w-4 h-4" />
-                Garantir Ingresso
+                {t("events.buyTicket")}
               </button>
             </span>
           </div>
         </div>
         {isAdmin && (
           <div className="flex flex-col gap-2 p-4 md:border-l border-border bg-secondary/10 justify-center min-w-[120px]">
-             <button onClick={() => handleEdit(event)} className="w-full border px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-secondary bg-background"><Edit2 className="w-4 h-4"/> Editar</button>
-             <button onClick={() => handleDelete(event)} className="w-full bg-destructive/10 text-destructive px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-destructive/20"><Trash2 className="w-4 h-4"/> Excluir</button>
+             <button onClick={() => handleEdit(event)} className="w-full border px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-secondary bg-background"><Edit2 className="w-4 h-4"/> {t("common.edit")}</button>
+             <button onClick={() => handleDelete(event)} className="w-full bg-destructive/10 text-destructive px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-destructive/20"><Trash2 className="w-4 h-4"/> {t("common.delete")}</button>
           </div>
         )}
       </div>
@@ -189,10 +191,10 @@ const EventsPage = () => {
           <div>
             <h1 className="font-display text-xl font-bold text-foreground flex items-center gap-2">
               <Calendar className="w-5 h-5 text-primary" />
-              Eventos
+              {t("events.title")}
             </h1>
             <p className="text-sm text-muted-foreground">
-              Festas, competições e eventos sociais da atlética
+              {t("events.subtitle")}
             </p>
           </div>
         </header>
@@ -201,13 +203,13 @@ const EventsPage = () => {
           {isAdmin && (
             <div className="mb-6 flex justify-end">
               <button onClick={handleCreate} className="gold-gradient text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 flex items-center gap-2">
-                <Plus className="w-4 h-4" /> Novo Evento
+                <Plus className="w-4 h-4" /> {t("events.new")}
               </button>
             </div>
           )}
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <p className="text-muted-foreground">Carregando eventos...</p>
+              <p className="text-muted-foreground">{t("events.loading")}</p>
             </div>
           ) : error ? (
             <div className="flex items-center justify-center py-12">
@@ -217,8 +219,8 @@ const EventsPage = () => {
             <div className="flex items-center justify-center py-12 border-2 border-dashed border-border rounded-xl">
               <div className="text-center space-y-3">
                 <Calendar className="w-12 h-12 text-muted-foreground mx-auto opacity-50" />
-                <p className="text-muted-foreground font-medium">Nenhum evento agendado</p>
-                <p className="text-sm text-muted-foreground">Fique de olho nas nossas redes sociais para novidades.</p>
+                <p className="text-muted-foreground font-medium">{t("events.empty")}</p>
+                <p className="text-sm text-muted-foreground">{t("events.emptyHint")}</p>
               </div>
             </div>
           ) : (
@@ -233,17 +235,19 @@ const EventsPage = () => {
         <Dialog open={eventToDelete !== null} onOpenChange={(open) => !open && setEventToDelete(null)}>
           <DialogContent className="max-w-md border-border bg-card">
             <DialogHeader>
-              <DialogTitle>Excluir evento?</DialogTitle>
+              <DialogTitle>{t("events.deleteConfirm")}</DialogTitle>
               <DialogDescription>
-                Tem certeza que deseja excluir {eventToDelete?.nome ? `"${eventToDelete.nome}"` : "este evento"}? Esta ação não pode ser desfeita.
+                {t("events.deleteBody", {
+                  name: eventToDelete?.nome ? `"${eventToDelete.nome}"` : t("events.thisEvent"),
+                })}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="flex-row justify-end gap-2 space-x-0">
               <Button variant="outline" onClick={() => setEventToDelete(null)}>
-                Cancelar
+                {t("common.cancel")}
               </Button>
               <Button variant="destructive" onClick={confirmDelete}>
-                Confirmar
+                {t("common.confirm")}
               </Button>
             </DialogFooter>
           </DialogContent>

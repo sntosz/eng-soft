@@ -9,6 +9,7 @@ import { Product } from "@/types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { isValidImageUrl } from "@/lib/utils";
 import { PIX_KEY, WHATSAPP_NUMBER } from "@/lib/checkoutConfig";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export function CheckoutModal({
   product,
   onSuccess,
 }: CheckoutModalProps) {
+  const { t } = useI18n();
   const { user, isLoggedIn } = useCurrentUser();
   const [quantity, setQuantity] = useState(1);
   const [submitting, setSubmitting] = useState(false);
@@ -67,7 +69,7 @@ export function CheckoutModal({
 
   const handleConfirmOrder = async () => {
     if (!isLoggedIn) {
-      setError("Você precisa estar logado para realizar um pedido.");
+      setError(t("checkout.loginRequired"));
       return;
     }
 
@@ -87,13 +89,13 @@ export function CheckoutModal({
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Não foi possível concluir o pedido.");
+        throw new Error(data.error || t("checkout.errorGeneric"));
       }
 
       setSuccess(true);
       onSuccess(data.novo_estoque ?? Math.max(0, product.estoque - quantity));
     } catch (err: any) {
-      setError(err.message || "Erro ao realizar pedido.");
+      setError(err.message || t("checkout.error"));
     } finally {
       setSubmitting(false);
     }
@@ -104,7 +106,7 @@ export function CheckoutModal({
     `Olá! Fiz um pedido na loja da Atlética:\n\n` +
     `👤 *Cliente:* ${user?.nome || "Membro"}\n` +
     `📦 *Produto:* ${product.nome}\n` +
-    `🔢 *Quantidade:* ${quantity} un.\n` +
+    `🔢 *{t("checkout.qty")}* ${quantity} un.\n` +
     `💰 *Valor Total:* ${valorTotal}\n` +
     `🔑 *Chave Pix Utilizada:* ${pixKey}\n\n` +
     `Segue em anexo o meu comprovante de pagamento Pix.`
@@ -120,7 +122,7 @@ export function CheckoutModal({
           <div className="flex items-center gap-2">
             <ShoppingBag className="w-5 h-5 text-primary" />
             <h2 className="font-display font-bold text-lg text-foreground">
-              {success ? "Pedido Registrado!" : "Confirmar Pedido"}
+              {success ? t("checkout.registered") : t("checkout.confirm")}
             </h2>
           </div>
           <Button
@@ -142,10 +144,10 @@ export function CheckoutModal({
               </div>
               <div>
                 <h3 className="text-xl font-bold font-display text-foreground">
-                  Pedido Registrado!
+                  {t("checkout.registered")}
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Seu pedido de <strong className="text-foreground">{quantity}x {product.nome}</strong> foi gravado no sistema.
+                  {t("checkout.successPre")} <strong className="text-foreground">{quantity}x {product.nome}</strong> {t("checkout.successPost")}
                 </p>
               </div>
 
@@ -154,24 +156,24 @@ export function CheckoutModal({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 font-semibold text-sm text-primary">
                     <QrCode className="w-4 h-4" />
-                    <span>Dados do Pagamento Pix</span>
+                    <span>{t("checkout.pixData")}</span>
                   </div>
                 </div>
 
                 <div className="space-y-1 text-xs text-muted-foreground border-b border-primary/20 pb-2">
                   <p className="flex justify-between">
-                    <span>Quantidade:</span>
+                    <span>{t("checkout.qty")}</span>
                     <strong className="text-foreground">{quantity} un.</strong>
                   </p>
                   <p className="flex justify-between">
-                    <span>Valor Total a Pagar:</span>
+                    <span>{t("checkout.totalToPay")}</span>
                     <strong className="text-primary text-sm font-bold">{valorTotal}</strong>
                   </p>
                 </div>
 
                 <div>
                   <p className="text-xs text-muted-foreground mb-1.5">
-                    Chave Pix (E-mail):
+                    {t("checkout.pixKeyLabel")}
                   </p>
                   <div className="flex items-center justify-between bg-background border border-border p-2.5 rounded-lg">
                     <span className="text-xs font-mono text-foreground font-semibold truncate mr-2">
@@ -187,12 +189,12 @@ export function CheckoutModal({
                       {copied ? (
                         <>
                           <Check className="w-3.5 h-3.5 text-emerald-500" />
-                          <span className="text-emerald-500">Copiado</span>
+                          <span className="text-emerald-500">{t("common.copied")}</span>
                         </>
                       ) : (
                         <>
                           <Copy className="w-3.5 h-3.5" />
-                          <span>Copiar</span>
+                          <span>{t("common.copy")}</span>
                         </>
                       )}
                     </Button>
@@ -204,10 +206,10 @@ export function CheckoutModal({
               <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-left space-y-2">
                 <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
                   <MessageSquare className="w-4 h-4" />
-                  Envie o Comprovante pelo WhatsApp
+                  {t("checkout.sendReceiptTitle")}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Para agilizar a aprovação e entrega do produto, clique no botão abaixo e envie seu comprovante Pix para a diretoria.
+                  {t("checkout.receiptHint")}
                 </p>
                 <a
                   href={whatsappUrl}
@@ -216,22 +218,22 @@ export function CheckoutModal({
                   className="mt-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors shadow-md inline-flex"
                 >
                   <MessageSquare className="w-4 h-4" />
-                  Enviar no WhatsApp da Atlética
+                  {t("checkout.whatsappBtn")}
                 </a>
               </div>
 
               <div className="p-3 rounded-xl bg-muted/40 border border-border text-left space-y-1 text-xs text-muted-foreground">
                 <p className="flex items-center gap-1.5 font-medium text-foreground">
-                  <MapPin className="w-3.5 h-3.5 text-primary" /> Retirada no Campus
+                  <MapPin className="w-3.5 h-3.5 text-primary" /> {t("checkout.pickupTitle")}
                 </p>
                 <p>
-                  Apresente sua Carteirinha Digital de Membro ao retirar os produtos no campus.
+                  {t("checkout.pickupHint")}
                 </p>
               </div>
 
               <div className="pt-2 flex flex-col gap-2">
                 <Button variant="outline" onClick={onClose} className="w-full">
-                  Fechar / Continuar Comprando
+                  {t("checkout.closeContinue")}
                 </Button>
               </div>
             </div>
@@ -277,7 +279,7 @@ export function CheckoutModal({
 
               {/* Seletor de Quantidade */}
               <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-secondary/20">
-                <span className="text-sm font-medium text-foreground">Quantidade</span>
+                <span className="text-sm font-medium text-foreground">{t("common.quantity")}</span>
                 <div className="flex items-center gap-3">
                   <Button
                     type="button"
@@ -323,20 +325,20 @@ export function CheckoutModal({
               ) : (
                 <div className="p-3 rounded-xl bg-secondary/40 border border-border text-xs text-center space-y-2">
                   <p className="text-muted-foreground">
-                    Você está navegando como visitante.
+                    {t("checkout.guestNotice")}
                   </p>
                   <Link
                     href="/login"
                     className="inline-block text-primary font-semibold hover:underline"
                   >
-                    Entrar com sua conta acadêmica para finalizar →
+                    {t("checkout.loginToFinish")}
                   </Link>
                 </div>
               )}
 
               {/* Resumo do Total */}
               <div className="pt-2 border-t border-border flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Total do Pedido</span>
+                <span className="text-sm text-muted-foreground">{t("checkout.total")}</span>
                 <span className="font-display text-xl font-bold text-primary">
                   {valorTotal}
                 </span>
@@ -354,7 +356,7 @@ export function CheckoutModal({
               onClick={onClose}
               disabled={submitting}
             >
-              Cancelar
+              {t("common.cancel")}
             </Button>
             <Button
               type="button"
@@ -365,10 +367,10 @@ export function CheckoutModal({
               {submitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Processando...</span>
+                  <span>{t("common.processing")}</span>
                 </>
               ) : (
-                <span>Confirmar Pedido</span>
+                <span>{t("checkout.confirm")}</span>
               )}
             </Button>
           </div>
