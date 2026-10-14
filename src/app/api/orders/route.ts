@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAuthUser } from "@/lib/authServer";
-import { createOrderSchema, updateOrderStatusSchema } from "@/lib/validations";
+import { createOrderSchema, updateOrderStatusSchema, cancelOrderSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -128,6 +128,7 @@ export async function POST(req: Request) {
 }
 
 // PUT /api/orders -> Atualiza o status de um pedido (Apenas Admin)
+// Quando o admin cancela, usa cancel_order_atomic para repor estoque.
 export async function PUT(req: Request) {
   try {
     const user = await getAuthUser();
@@ -148,6 +149,39 @@ export async function PUT(req: Request) {
 
     const { pedido_id, status_pedido } = parseResult.data;
 
+    // Se for cancelamento, usa a função atômica para repor estoque
+    if (status_pedido === "Cancelado") {
+      const { data, error } = await supabaseAdmin.rpc("cancel_order_atomic", {
+        p_pedido_id: pedido_id,
+        // admin não precisa validar ownership, passa null
+        p_membro_id: null,
+      });
+
+      if (error) {
+        if (error.message === "ORDER_NOT_FOUND") {
+          return NextResponse.json({ error: "Pedido não encontrado." }, { status: 404 });
+        }
+        if (error.message === "ORDER_NOT_CANCELABLE") {
+          return NextResponse.json(
+            { error: "Este pedido não pode mais ser cancelado (já foi pago, entregue ou cancelado)." },
+            { status: 409 }
+          );
+        }
+        console.error("Erro ao cancelar pedido (admin):", error);
+        return NextResponse.json(
+          { error: "Não foi possível cancelar o pedido." },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        pedido: data?.pedido,
+        message: "Pedido cancelado e estoque reposto com sucesso!",
+      });
+    }
+
+    // Para outros status, faz update simples
     const { data: pedidoAtualizado, error } = await supabaseAdmin
       .from("pedidos")
       .update({ status_pedido })
@@ -172,6 +206,71 @@ export async function PUT(req: Request) {
     console.error("Erro na rota PUT /api/orders:", err);
     return NextResponse.json(
       { error: err.message || "Erro interno ao atualizar status." },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH /api/orders -> Cancelamento de pedido pelo próprio cliente
+// Só permite cancelar pedidos com status "Processando..."
+export async function PATCH(req: Request) {
+  try {
+    const user = await getAuthUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: "Você precisa estar autenticado para cancelar pedidos." },
+        { status: 401 }
+      );
+    }
+
+    const rawBody = await req.json().catch(() => ({}));
+    const parseResult = cancelOrderSchema.safeParse(rawBody);
+
+    if (!parseResult.success) {
+      const firstError = parseResult.error.errors[0]?.message || "Dados inválidos";
+      return NextResponse.json({ error: firstError }, { status: 400 });
+    }
+
+    const { pedido_id } = parseResult.data;
+
+    const { data, error } = await supabaseAdmin.rpc("cancel_order_atomic", {
+      p_pedido_id: pedido_id,
+      p_membro_id: user.id, // valida que o pedido pertence ao usuário
+    });
+
+    if (error) {
+      if (error.message === "ORDER_NOT_FOUND") {
+        return NextResponse.json({ error: "Pedido não encontrado." }, { status: 404 });
+      }
+      if (error.message === "ORDER_NOT_OWNED") {
+        return NextResponse.json(
+          { error: "Você não tem permissão para cancelar este pedido." },
+          { status: 403 }
+        );
+      }
+      if (error.message === "ORDER_NOT_CANCELABLE") {
+        return NextResponse.json(
+          { error: "Este pedido não pode mais ser cancelado. Apenas pedidos em processamento podem ser cancelados." },
+          { status: 409 }
+        );
+      }
+
+      console.error("Erro ao cancelar pedido:", error);
+      return NextResponse.json(
+        { error: "Não foi possível cancelar o pedido." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      pedido: data?.pedido,
+      message: "Pedido cancelado com sucesso! O estoque foi reposto.",
+    });
+  } catch (err: any) {
+    console.error("Erro na rota PATCH /api/orders:", err);
+    return NextResponse.json(
+      { error: err.message || "Erro interno ao cancelar pedido." },
       { status: 500 }
     );
   }

@@ -11,6 +11,7 @@ import {
   Settings,
   User,
   ClipboardCheck,
+  ClipboardList,
   LucideIcon,
 } from "lucide-react";
 import logoSwe from "@/assets/logo-aaaes.png";
@@ -32,6 +33,7 @@ const navItems: NavItem[] = [
   { icon: Trophy, labelKey: "nav.matches", href: "/matches" },
   { icon: Calendar, labelKey: "nav.events", href: "/events" },
   { icon: ShoppingBag, labelKey: "nav.store", href: "/store" },
+  { icon: ClipboardList, labelKey: "nav.orders", href: "/orders", authOnly: true },
   { icon: CreditCard, labelKey: "nav.members", href: "/members", adminOnly: true },
   { icon: ClipboardCheck, labelKey: "nav.requests", href: "/members/requests", adminOnly: true },
   { icon: Settings, labelKey: "nav.settings", href: "/settings", authOnly: true },

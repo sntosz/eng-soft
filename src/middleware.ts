@@ -80,7 +80,8 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const isProtectedUserRoute = pathname.startsWith("/settings");
+  const isProtectedUserRoute =
+    pathname.startsWith("/settings") || pathname.startsWith("/orders");
   if (isProtectedUserRoute && !isAuthenticated) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);

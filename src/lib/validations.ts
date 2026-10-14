@@ -148,6 +148,10 @@ export const updateOrderStatusSchema = z.object({
   ),
 });
 
+export const cancelOrderSchema = z.object({
+  pedido_id: z.string({ required_error: "ID do pedido é obrigatório" }).uuid("ID do pedido inválido"),
+});
+
 // Partidas
 export const matchSchema = z.object({
   id: z.string().uuid("ID inválido").optional(),

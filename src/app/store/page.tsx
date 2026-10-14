@@ -1,17 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import Image from "next/image";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useI18n } from "@/contexts/I18nContext";
 import { ProductModal } from "@/components/ProductModal";
 import { CheckoutModal } from "@/components/CheckoutModal";
-import { ShoppingBag, Package, Plus, Edit2, Trash2, ClipboardList, CheckCircle, Clock, AlertTriangle, RefreshCw } from "lucide-react";
+import { ShoppingBag, Package, Plus, Edit2, Trash2, ClipboardList, CheckCircle, Clock, AlertTriangle, RefreshCw, Search } from "lucide-react";
 import { Product } from "@/types";
 import { isValidImageUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
+import { MessageKey } from "@/i18n/messages";
+
+type OrderStatusFilter =
+  | "all"
+  | "Processando..."
+  | "Pago / Aguardando Retirada"
+  | "Entregue"
+  | "Cancelado";
+
+const ORDER_STATUS_FILTERS: { value: OrderStatusFilter; labelKey: MessageKey }[] = [
+  { value: "all", labelKey: "store.filterAll" },
+  { value: "Processando...", labelKey: "store.filterProcessing" },
+  { value: "Pago / Aguardando Retirada", labelKey: "store.filterPaid" },
+  { value: "Entregue", labelKey: "store.filterDelivered" },
+  { value: "Cancelado", labelKey: "store.filterCanceled" },
+];
 
 export default function StorePage() {
   const { t } = useI18n();
@@ -33,6 +50,23 @@ export default function StorePage() {
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [error, setError] = useState("");
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [orderStatusFilter, setOrderStatusFilter] = useState<OrderStatusFilter>("all");
+  const [orderSearch, setOrderSearch] = useState("");
+
+  const filteredOrders = useMemo(() => {
+    const term = orderSearch.trim().toLowerCase();
+    return orders.filter((pedido) => {
+      if (orderStatusFilter !== "all" && pedido.status_pedido !== orderStatusFilter) {
+        return false;
+      }
+      if (!term) return true;
+      return (
+        pedido.membros?.nome?.toLowerCase().includes(term) ||
+        pedido.membros?.email?.toLowerCase().includes(term) ||
+        pedido.id.toLowerCase().startsWith(term)
+      );
+    });
+  }, [orders, orderStatusFilter, orderSearch]);
 
   const loadProducts = async () => {
     try {
@@ -368,17 +402,44 @@ export default function StorePage() {
                 </Button>
               </div>
 
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex flex-wrap gap-2">
+                  {ORDER_STATUS_FILTERS.map((f) => (
+                    <button
+                      key={f.value}
+                      onClick={() => setOrderStatusFilter(f.value)}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                        orderStatusFilter === f.value
+                          ? "bg-primary/15 text-primary border-primary/30"
+                          : "bg-muted text-muted-foreground border-border hover:text-foreground"
+                      }`}
+                    >
+                      {t(f.labelKey)}
+                    </button>
+                  ))}
+                </div>
+                <div className="relative sm:ml-auto sm:w-72">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    value={orderSearch}
+                    onChange={(e) => setOrderSearch(e.target.value)}
+                    placeholder={t("store.searchOrders")}
+                    className="pl-9 h-9 text-sm bg-background"
+                  />
+                </div>
+              </div>
+
               {loadingOrders ? (
                 <div className="text-center py-12 text-muted-foreground">
                   {t("store.loadingOrders")}
                 </div>
-              ) : orders.length === 0 ? (
+              ) : filteredOrders.length === 0 ? (
                 <div className="text-center py-12 border-2 border-dashed border-border rounded-xl text-muted-foreground">
                   {t("store.emptyOrders")}
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {orders.map((pedido) => {
+                  {filteredOrders.map((pedido) => {
                     const dataFormatada = pedido.criado_em
                       ? new Date(pedido.criado_em).toLocaleDateString("pt-BR", {
                           day: "2-digit",

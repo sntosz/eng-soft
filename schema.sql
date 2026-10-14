@@ -1,3 +1,10 @@
+-- ============================================================================
+-- schema.sql — snapshot COMPLETO do banco para instalação nova.
+-- Para bancos já existentes, aplique apenas os deltas em supabase/migrations/
+-- (cada arquivo é incremental). Ao alterar o schema, atualize os dois lugares:
+-- aqui (estado final) e uma nova migration (delta).
+-- ============================================================================
+
 -- Extensões necessárias
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -190,3 +197,48 @@ $function$;
 REVOKE ALL ON FUNCTION public.approve_member_access_request(UUID, UUID) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.approve_member_access_request(UUID, UUID) FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.approve_member_access_request(UUID, UUID) TO service_role;
+
+-- Cancela um pedido atomicamente e repõe o estoque dos itens.
+CREATE OR REPLACE FUNCTION public.cancel_order_atomic(
+  p_pedido_id UUID,
+  p_membro_id UUID DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+DECLARE
+  v_pedido public.pedidos%ROWTYPE;
+  v_item RECORD;
+BEGIN
+  SELECT * INTO v_pedido
+  FROM public.pedidos WHERE id = p_pedido_id FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION USING ERRCODE = 'P0002', MESSAGE = 'ORDER_NOT_FOUND';
+  END IF;
+
+  IF p_membro_id IS NOT NULL AND v_pedido.membro_id != p_membro_id THEN
+    RAISE EXCEPTION USING ERRCODE = 'P0003', MESSAGE = 'ORDER_NOT_OWNED';
+  END IF;
+
+  IF v_pedido.status_pedido NOT IN ('Processando...') THEN
+    RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'ORDER_NOT_CANCELABLE';
+  END IF;
+
+  FOR v_item IN
+    SELECT produto_id, quantidade FROM public.itens_pedido WHERE pedido_id = p_pedido_id
+  LOOP
+    UPDATE public.produtos SET estoque = estoque + v_item.quantidade WHERE id = v_item.produto_id;
+  END LOOP;
+
+  UPDATE public.pedidos SET status_pedido = 'Cancelado' WHERE id = p_pedido_id RETURNING * INTO v_pedido;
+
+  RETURN jsonb_build_object('pedido', to_jsonb(v_pedido));
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.cancel_order_atomic(UUID, UUID) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.cancel_order_atomic(UUID, UUID) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.cancel_order_atomic(UUID, UUID) TO service_role;
