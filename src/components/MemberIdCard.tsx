@@ -19,7 +19,7 @@ const MemberIdCard = () => {
     loadOrders,
     cancelingOrderId,
     confirmCancelOrder,
-  } = useOrders(5);
+  } = useOrders(10);
   const { t } = useI18n();
 
   useEffect(() => {
@@ -137,7 +137,7 @@ const MemberIdCard = () => {
               </Link>
             </div>
           ) : loadingOrders ? (
-            <div className="space-y-2">
+            <div className="space-y-2 overflow-hidden">
               <div className="h-11 bg-muted/50 rounded-lg animate-pulse" />
               <div className="h-11 bg-muted/50 rounded-lg animate-pulse" />
             </div>
@@ -154,7 +154,7 @@ const MemberIdCard = () => {
               </Link>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[216px] overflow-y-auto pr-1">
               {orders.map((order) => {
                 const orderProductName =
                   order.itens_pedido && order.itens_pedido.length > 0
@@ -194,14 +194,22 @@ const MemberIdCard = () => {
                       <span className="text-sm text-foreground font-medium truncate">
                         {orderProductName}
                       </span>
-                      {order.total != null && (
-                        <span className="text-[11px] text-muted-foreground">
-                          {Number(order.total).toLocaleString("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                          })}
-                        </span>
-                      )}
+                      <span className="text-[11px] text-muted-foreground">
+                        {[
+                          order.total != null &&
+                            Number(order.total).toLocaleString("pt-BR", {
+                              style: "currency",
+                              currency: "BRL",
+                            }),
+                          order.criado_em &&
+                            new Date(order.criado_em).toLocaleDateString(
+                              "pt-BR",
+                              { day: "2-digit", month: "2-digit", year: "numeric" }
+                            ),
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
                     </div>
                     <div className="flex flex-col items-end gap-1.5 shrink-0">
                       <span
