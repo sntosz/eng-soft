@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAuthUser } from "@/lib/authServer";
 import { createOrderSchema, updateOrderStatusSchema, cancelOrderSchema } from "@/lib/validations";
+import { ORDER_STATUS } from "@/lib/orderStatus";
 
 export const dynamic = "force-dynamic";
 
@@ -164,7 +165,7 @@ export async function PUT(req: Request) {
     const { pedido_id, status_pedido } = parseResult.data;
 
     // Se for cancelamento, usa a função atômica para repor estoque
-    if (status_pedido === "Cancelado") {
+    if (status_pedido === ORDER_STATUS.CANCELED) {
       const { data, error } = await supabaseAdmin.rpc("cancel_order_atomic", {
         p_pedido_id: pedido_id,
         // admin não precisa validar ownership, passa null
@@ -201,7 +202,7 @@ export async function PUT(req: Request) {
       .from("pedidos")
       .update({ status_pedido })
       .eq("id", pedido_id)
-      .neq("status_pedido", "Cancelado")
+      .neq("status_pedido", ORDER_STATUS.CANCELED)
       .select("*")
       .maybeSingle();
 

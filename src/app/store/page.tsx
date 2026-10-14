@@ -14,24 +14,14 @@ import { isValidImageUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
-import { MessageKey } from "@/i18n/messages";
-
-type OrderStatusFilter =
-  | "all"
-  | "Processando..."
-  | "Pago / Aguardando Retirada"
-  | "Entregue"
-  | "Cancelado";
+import {
+  ORDER_STATUS,
+  ORDER_STATUS_FILTERS,
+  OrderStatus,
+  OrderStatusFilter,
+} from "@/lib/orderStatus";
 
 const ORDERS_PAGE_SIZE = 15;
-
-const ORDER_STATUS_FILTERS: { value: OrderStatusFilter; labelKey: MessageKey }[] = [
-  { value: "all", labelKey: "store.filterAll" },
-  { value: "Processando...", labelKey: "store.filterProcessing" },
-  { value: "Pago / Aguardando Retirada", labelKey: "store.filterPaid" },
-  { value: "Entregue", labelKey: "store.filterDelivered" },
-  { value: "Cancelado", labelKey: "store.filterCanceled" },
-];
 
 export default function StorePage() {
   const { t } = useI18n();
@@ -170,7 +160,7 @@ export default function StorePage() {
     }
   };
 
-  const handleUpdateOrderStatus = async (pedidoId: string, novoStatus: string) => {
+  const handleUpdateOrderStatus = async (pedidoId: string, novoStatus: OrderStatus) => {
     try {
       setUpdatingOrderId(pedidoId);
       const res = await fetch("/api/orders", {
@@ -502,19 +492,19 @@ export default function StorePage() {
                               {t("store.statusLabel")}
                             </span>
                             <select
-                              value={pedido.status_pedido || t("store.status.processing")}
+                              value={pedido.status_pedido || ORDER_STATUS.PROCESSING}
                               disabled={updatingOrderId === pedido.id}
                               onChange={(e) =>
-                                handleUpdateOrderStatus(pedido.id, e.target.value)
+                                handleUpdateOrderStatus(pedido.id, e.target.value as OrderStatus)
                               }
                               className="bg-background border border-border rounded-lg text-xs font-semibold px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary text-foreground cursor-pointer"
                             >
-                              <option value="Processando...">⏳ {t("store.status.processing")}</option>
-                              <option value="Pago / Aguardando Retirada">
+                              <option value={ORDER_STATUS.PROCESSING}>⏳ {t("store.status.processing")}</option>
+                              <option value={ORDER_STATUS.PAID}>
                                 🟢 {t("store.status.paid")}
                               </option>
-                              <option value="Entregue">✅ {t("store.status.delivered")}</option>
-                              <option value="Cancelado">❌ {t("store.status.canceled")}</option>
+                              <option value={ORDER_STATUS.DELIVERED}>✅ {t("store.status.delivered")}</option>
+                              <option value={ORDER_STATUS.CANCELED}>❌ {t("store.status.canceled")}</option>
                             </select>
                           </div>
                         </div>

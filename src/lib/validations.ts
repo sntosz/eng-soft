@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ORDER_STATUS_VALUES } from "@/lib/orderStatus";
 
 const trimmedRequiredText = (message: string) =>
   z.string({ required_error: message }).trim().min(1, message);
@@ -142,10 +143,10 @@ export const createOrderSchema = z.object({
 
 export const updateOrderStatusSchema = z.object({
   pedido_id: z.string({ required_error: "ID do pedido é obrigatório" }).uuid("ID do pedido inválido"),
-  status_pedido: z.enum(
-    ["Processando...", "Pago / Aguardando Retirada", "Entregue", "Cancelado"],
-    { required_error: "Novo status é obrigatório", invalid_type_error: "Status do pedido inválido" }
-  ),
+  status_pedido: z.enum(ORDER_STATUS_VALUES, {
+    required_error: "Novo status é obrigatório",
+    invalid_type_error: "Status do pedido inválido",
+  }),
 });
 
 export const cancelOrderSchema = z.object({

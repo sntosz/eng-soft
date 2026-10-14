@@ -7,6 +7,7 @@ import { Package, CheckCircle2, Clock, LogIn, Shield, ArrowRight, XCircle } from
 import logoAAES from "@/assets/logo-aaaes.png";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useOrders } from "@/hooks/useOrders";
+import { ORDER_STATUS } from "@/lib/orderStatus";
 import { useI18n } from "@/contexts/I18nContext";
 
 const MemberIdCard = () => {
@@ -170,17 +171,17 @@ const MemberIdCard = () => {
                     : `Pedido #${order.id.slice(0, 6).toUpperCase()}`;
 
                 const isReady =
-                  order.status_pedido === "Pago / Aguardando Retirada" ||
-                  order.status_pedido === "Entregue";
+                  order.status_pedido === ORDER_STATUS.PAID ||
+                  order.status_pedido === ORDER_STATUS.DELIVERED;
 
-                const isCanceled = order.status_pedido === "Cancelado";
+                const isCanceled = order.status_pedido === ORDER_STATUS.CANCELED;
 
                 const statusText =
-                  order.status_pedido === "Pago / Aguardando Retirada"
+                  order.status_pedido === ORDER_STATUS.PAID
                     ? t("card.status.ready")
-                    : order.status_pedido === "Entregue"
+                    : order.status_pedido === ORDER_STATUS.DELIVERED
                     ? t("card.status.delivered")
-                    : order.status_pedido === "Cancelado"
+                    : isCanceled
                     ? t("store.status.canceled")
                     : t("card.status.preparing");
 
@@ -219,7 +220,7 @@ const MemberIdCard = () => {
                         )}
                         {statusText}
                       </span>
-                      {order.status_pedido === "Processando..." && (
+                      {order.status_pedido === ORDER_STATUS.PROCESSING && (
                         <button
                           onClick={() => confirmCancelOrder(order.id)}
                           disabled={cancelingOrderId === order.id}

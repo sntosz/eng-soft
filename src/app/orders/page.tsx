@@ -15,24 +15,13 @@ import {
   LogIn,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MessageKey } from "@/i18n/messages";
-
-type StatusFilter =
-  | "all"
-  | "Processando..."
-  | "Pago / Aguardando Retirada"
-  | "Entregue"
-  | "Cancelado";
+import {
+  ORDER_STATUS,
+  ORDER_STATUS_FILTERS,
+  OrderStatusFilter,
+} from "@/lib/orderStatus";
 
 const PAGE_SIZE = 3;
-
-const STATUS_FILTERS: { value: StatusFilter; labelKey: MessageKey }[] = [
-  { value: "all", labelKey: "store.filterAll" },
-  { value: "Processando...", labelKey: "store.filterProcessing" },
-  { value: "Pago / Aguardando Retirada", labelKey: "store.filterPaid" },
-  { value: "Entregue", labelKey: "store.filterDelivered" },
-  { value: "Cancelado", labelKey: "store.filterCanceled" },
-];
 
 export default function OrdersPage() {
   const { t } = useI18n();
@@ -46,7 +35,7 @@ export default function OrdersPage() {
     cancelingOrderId,
     confirmCancelOrder,
   } = useOrders(PAGE_SIZE);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<OrderStatusFilter>("all");
 
   useEffect(() => {
     if (isLoggedIn && user?.id) {
@@ -63,11 +52,11 @@ export default function OrdersPage() {
   );
 
   const statusLabel = (status?: string) =>
-    status === "Pago / Aguardando Retirada"
+    status === ORDER_STATUS.PAID
       ? t("card.status.ready")
-      : status === "Entregue"
+      : status === ORDER_STATUS.DELIVERED
       ? t("card.status.delivered")
-      : status === "Cancelado"
+      : status === ORDER_STATUS.CANCELED
       ? t("store.status.canceled")
       : t("store.status.processing");
 
@@ -104,7 +93,7 @@ export default function OrdersPage() {
             <>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap gap-2">
-                  {STATUS_FILTERS.map((f) => (
+                  {ORDER_STATUS_FILTERS.map((f) => (
                     <button
                       key={f.value}
                       onClick={() => setStatusFilter(f.value)}
@@ -160,11 +149,11 @@ export default function OrdersPage() {
                       { style: "currency", currency: "BRL" }
                     );
 
-                    const isProcessing = pedido.status_pedido === "Processando...";
-                    const isCanceled = pedido.status_pedido === "Cancelado";
+                    const isProcessing = pedido.status_pedido === ORDER_STATUS.PROCESSING;
+                    const isCanceled = pedido.status_pedido === ORDER_STATUS.CANCELED;
                     const isReady =
-                      pedido.status_pedido === "Pago / Aguardando Retirada" ||
-                      pedido.status_pedido === "Entregue";
+                      pedido.status_pedido === ORDER_STATUS.PAID ||
+                      pedido.status_pedido === ORDER_STATUS.DELIVERED;
 
                     return (
                       <div

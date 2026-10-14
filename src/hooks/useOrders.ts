@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { Order } from "@/types";
+import { ORDER_STATUS } from "@/lib/orderStatus";
 import { useI18n } from "@/contexts/I18nContext";
 import { toast } from "@/components/ui/sonner";
 
@@ -53,7 +54,9 @@ export function useOrders(pageSize = 20) {
 
         setOrders((prev) =>
           prev.map((ord) =>
-            ord.id === pedidoId ? { ...ord, status_pedido: "Cancelado" } : ord
+            ord.id === pedidoId
+              ? { ...ord, status_pedido: ORDER_STATUS.CANCELED }
+              : ord
           )
         );
         toast.success(t("store.orderCanceled"));

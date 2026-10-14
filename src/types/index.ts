@@ -1,3 +1,5 @@
+import type { OrderStatus } from "@/lib/orderStatus";
+
 export interface Member {
   id: string;
   nome: string;
@@ -66,7 +68,7 @@ export interface OrderItem {
 export interface Order {
   id: string;
   membro_id?: string;
-  status_pedido?: string;
+  status_pedido?: OrderStatus;
   total?: number;
   criado_em?: string;
   created_at?: string;
