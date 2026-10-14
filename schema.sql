@@ -223,8 +223,16 @@ BEGIN
     RAISE EXCEPTION USING ERRCODE = 'P0003', MESSAGE = 'ORDER_NOT_OWNED';
   END IF;
 
-  IF v_pedido.status_pedido NOT IN ('Processando...') THEN
-    RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'ORDER_NOT_CANCELABLE';
+  -- Membro só cancela pedidos em processamento; admin também pode cancelar
+  -- pedidos já pagos que ainda não foram entregues.
+  IF p_membro_id IS NOT NULL THEN
+    IF v_pedido.status_pedido NOT IN ('Processando...') THEN
+      RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'ORDER_NOT_CANCELABLE';
+    END IF;
+  ELSE
+    IF v_pedido.status_pedido NOT IN ('Processando...', 'Pago / Aguardando Retirada') THEN
+      RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'ORDER_NOT_CANCELABLE';
+    END IF;
   END IF;
 
   FOR v_item IN

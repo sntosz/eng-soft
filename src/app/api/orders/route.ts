@@ -181,19 +181,38 @@ export async function PUT(req: Request) {
       });
     }
 
-    // Para outros status, faz update simples
+    // Para outros status, faz update condicional: um pedido "Cancelado" é
+    // final e não pode ser reativado (o estoque já foi reposto).
     const { data: pedidoAtualizado, error } = await supabaseAdmin
       .from("pedidos")
       .update({ status_pedido })
       .eq("id", pedido_id)
+      .neq("status_pedido", "Cancelado")
       .select("*")
-      .single();
+      .maybeSingle();
 
-    if (error || !pedidoAtualizado) {
+    if (error) {
       console.error("Erro ao atualizar status do pedido:", error);
       return NextResponse.json(
         { error: "Não foi possível atualizar o status do pedido." },
         { status: 500 }
+      );
+    }
+
+    if (!pedidoAtualizado) {
+      const { data: pedidoAtual } = await supabaseAdmin
+        .from("pedidos")
+        .select("status_pedido")
+        .eq("id", pedido_id)
+        .maybeSingle();
+
+      if (!pedidoAtual) {
+        return NextResponse.json({ error: "Pedido não encontrado." }, { status: 404 });
+      }
+
+      return NextResponse.json(
+        { error: "Pedidos cancelados não podem ser reativados." },
+        { status: 409 }
       );
     }
 
