@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import Image from "next/image";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useOrders } from "@/hooks/useOrders";
 import { useI18n } from "@/contexts/I18nContext";
 import { ProductModal } from "@/components/ProductModal";
 import { CheckoutModal } from "@/components/CheckoutModal";
@@ -21,6 +22,8 @@ type OrderStatusFilter =
   | "Pago / Aguardando Retirada"
   | "Entregue"
   | "Cancelado";
+
+const ORDERS_PAGE_SIZE = 15;
 
 const ORDER_STATUS_FILTERS: { value: OrderStatusFilter; labelKey: MessageKey }[] = [
   { value: "all", labelKey: "store.filterAll" },
@@ -45,10 +48,15 @@ export default function StorePage() {
   const [productForCheckout, setProductForCheckout] = useState<Product | null>(null);
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingOrders, setLoadingOrders] = useState(false);
   const [error, setError] = useState("");
+  const {
+    orders,
+    setOrders,
+    totalOrders,
+    loading: loadingOrders,
+    loadOrders,
+  } = useOrders(ORDERS_PAGE_SIZE);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [orderStatusFilter, setOrderStatusFilter] = useState<OrderStatusFilter>("all");
   const [orderSearch, setOrderSearch] = useState("");
@@ -86,23 +94,6 @@ export default function StorePage() {
       setError(err.message || t("store.errorLoad"));
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadOrders = async () => {
-    try {
-      setLoadingOrders(true);
-      const res = await fetch("/api/orders");
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error || t("store.errorLoadOrders"));
-
-      setOrders(data.pedidos || []);
-    } catch (err: any) {
-      console.error("Erro ao carregar pedidos:", err);
-      toast.error(err.message || t("store.errorLoadOrders"));
-    } finally {
-      setLoadingOrders(false);
     }
   };
 
@@ -393,7 +384,7 @@ export default function StorePage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={loadOrders}
+                  onClick={() => loadOrders()}
                   disabled={loadingOrders}
                   className="flex items-center gap-2 text-xs"
                 >
@@ -530,6 +521,20 @@ export default function StorePage() {
                       </div>
                     );
                   })}
+
+                  {orders.length < totalOrders && (
+                    <div className="flex justify-center pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => loadOrders(orders.length)}
+                        disabled={loadingOrders}
+                        className="text-xs"
+                      >
+                        {t("store.loadMore")}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

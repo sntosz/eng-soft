@@ -4,19 +4,17 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useOrders } from "@/hooks/useOrders";
 import { useI18n } from "@/contexts/I18nContext";
 import {
   ClipboardList,
   RefreshCw,
-  Package,
   CheckCircle2,
   Clock,
   XCircle,
   LogIn,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/sonner";
-import { Order } from "@/types";
 import { MessageKey } from "@/i18n/messages";
 
 type StatusFilter =
@@ -25,6 +23,8 @@ type StatusFilter =
   | "Pago / Aguardando Retirada"
   | "Entregue"
   | "Cancelado";
+
+const PAGE_SIZE = 3;
 
 const STATUS_FILTERS: { value: StatusFilter; labelKey: MessageKey }[] = [
   { value: "all", labelKey: "store.filterAll" },
@@ -38,67 +38,21 @@ export default function OrdersPage() {
   const { t } = useI18n();
   const { user, isLoggedIn, loading: authLoading } = useCurrentUser();
 
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(false);
+  const {
+    orders,
+    totalOrders,
+    loading,
+    loadOrders,
+    cancelingOrderId,
+    confirmCancelOrder,
+  } = useOrders(PAGE_SIZE);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [cancelingOrderId, setCancelingOrderId] = useState<string | null>(null);
-
-  const loadOrders = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/orders", { cache: "no-store" });
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error || t("store.errorLoadOrders"));
-
-      setOrders(data.pedidos || []);
-    } catch (err: any) {
-      console.error("Erro ao carregar pedidos:", err);
-      toast.error(err.message || t("store.errorLoadOrders"));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     if (isLoggedIn && user?.id) {
       loadOrders();
     }
   }, [isLoggedIn, user?.id]);
-
-  const handleCancelOrder = (pedidoId: string) => {
-    toast(t("store.cancelConfirm"), {
-      action: {
-        label: t("common.confirm"),
-        onClick: async () => {
-          try {
-            setCancelingOrderId(pedidoId);
-            const res = await fetch("/api/orders", {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ pedido_id: pedidoId }),
-            });
-            const data = await res.json();
-
-            if (!res.ok) throw new Error(data.error || t("store.errorCancel"));
-
-            setOrders((prev) =>
-              prev.map((ord) =>
-                ord.id === pedidoId
-                  ? { ...ord, status_pedido: "Cancelado" }
-                  : ord
-              )
-            );
-            toast.success(t("store.orderCanceled"));
-          } catch (err: any) {
-            toast.error(err.message || t("store.errorCancel"));
-          } finally {
-            setCancelingOrderId(null);
-          }
-        },
-      },
-    });
-  };
 
   const filteredOrders = useMemo(
     () =>
@@ -167,7 +121,7 @@ export default function OrdersPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={loadOrders}
+                  onClick={() => loadOrders()}
                   disabled={loading}
                   className="flex items-center gap-2 text-xs"
                 >
@@ -270,7 +224,7 @@ export default function OrdersPage() {
 
                           {isProcessing && (
                             <button
-                              onClick={() => handleCancelOrder(pedido.id)}
+                              onClick={() => confirmCancelOrder(pedido.id)}
                               disabled={cancelingOrderId === pedido.id}
                               className="self-start md:self-end bg-destructive/10 text-destructive px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 hover:bg-destructive/20 transition-colors disabled:opacity-50"
                             >
@@ -284,6 +238,20 @@ export default function OrdersPage() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {orders.length < totalOrders && (
+                <div className="flex justify-center pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => loadOrders(orders.length)}
+                    disabled={loading}
+                    className="text-xs"
+                  >
+                    {t("store.loadMore")}
+                  </Button>
                 </div>
               )}
             </>

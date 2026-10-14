@@ -2,94 +2,32 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Package, CheckCircle2, Clock, LogIn, Shield, ArrowRight, XCircle } from "lucide-react";
 import logoAAES from "@/assets/logo-aaaes.png";
-import { Order } from "@/types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useOrders } from "@/hooks/useOrders";
 import { useI18n } from "@/contexts/I18nContext";
-import { toast } from "@/components/ui/sonner";
 
 const MemberIdCard = () => {
   const { user, isLoggedIn, loading: authLoading } = useCurrentUser();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState(false);
-  const [cancelingOrderId, setCancelingOrderId] = useState<string | null>(null);
+  const {
+    orders,
+    setOrders,
+    loading: loadingOrders,
+    loadOrders,
+    cancelingOrderId,
+    confirmCancelOrder,
+  } = useOrders(5);
   const { t } = useI18n();
 
   useEffect(() => {
-    let mounted = true;
-
-    async function loadUserOrders() {
-      if (!user?.id) {
-        setOrders([]);
-        return;
-      }
-
-      try {
-        setLoadingOrders(true);
-        const res = await fetch("/api/orders", { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-          console.error("Erro ao buscar pedidos do membro:", data.error);
-          return;
-        }
-
-        if (mounted && data.pedidos) {
-          setOrders((data.pedidos as Order[]).slice(0, 5));
-        }
-      } catch (err) {
-        console.error("Falha ao carregar pedidos:", err);
-      } finally {
-        if (mounted) setLoadingOrders(false);
-      }
-    }
-
     if (isLoggedIn && user?.id) {
-      loadUserOrders();
+      loadOrders();
     } else {
       setOrders([]);
     }
-
-    return () => {
-      mounted = false;
-    };
   }, [isLoggedIn, user?.id]);
-
-  const handleCancelOrder = (pedidoId: string) => {
-    toast(t("store.cancelConfirm"), {
-      action: {
-        label: t("common.confirm"),
-        onClick: async () => {
-          try {
-            setCancelingOrderId(pedidoId);
-            const res = await fetch("/api/orders", {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ pedido_id: pedidoId }),
-            });
-            const data = await res.json();
-
-            if (!res.ok) throw new Error(data.error || t("store.errorCancel"));
-
-            setOrders((prev) =>
-              prev.map((ord) =>
-                ord.id === pedidoId
-                  ? { ...ord, status_pedido: "Cancelado" }
-                  : ord
-              )
-            );
-            toast.success(t("store.orderCanceled"));
-          } catch (err: any) {
-            toast.error(err.message || t("store.errorCancel"));
-          } finally {
-            setCancelingOrderId(null);
-          }
-        },
-      },
-    });
-  };
 
   const currentYear = new Date().getFullYear();
 
@@ -216,7 +154,7 @@ const MemberIdCard = () => {
             </div>
           ) : (
             <div className="space-y-2">
-              {orders.map((order: Order) => {
+              {orders.map((order) => {
                 const orderProductName =
                   order.itens_pedido && order.itens_pedido.length > 0
                     ? order.itens_pedido
@@ -229,7 +167,7 @@ const MemberIdCard = () => {
                           }`;
                         })
                         .join(", ")
-                    : order.nome || `Pedido #${order.id.slice(0, 6).toUpperCase()}`;
+                    : `Pedido #${order.id.slice(0, 6).toUpperCase()}`;
 
                 const isReady =
                   order.status_pedido === "Pago / Aguardando Retirada" ||
@@ -283,7 +221,7 @@ const MemberIdCard = () => {
                       </span>
                       {order.status_pedido === "Processando..." && (
                         <button
-                          onClick={() => handleCancelOrder(order.id)}
+                          onClick={() => confirmCancelOrder(order.id)}
                           disabled={cancelingOrderId === order.id}
                           className="flex items-center gap-1 text-[11px] font-medium text-destructive hover:underline disabled:opacity-50"
                         >

@@ -16,6 +16,14 @@ export async function GET(req: Request) {
       );
     }
 
+    const { searchParams } = new URL(req.url);
+    const rawLimit = Number.parseInt(searchParams.get("limit") ?? "", 10);
+    const rawOffset = Number.parseInt(searchParams.get("offset") ?? "", 10);
+    const limit = Number.isFinite(rawLimit)
+      ? Math.min(Math.max(rawLimit, 1), 200)
+      : 100;
+    const offset = Number.isFinite(rawOffset) ? Math.max(rawOffset, 0) : 0;
+
     let query = supabaseAdmin
       .from("pedidos")
       .select(`
@@ -31,15 +39,16 @@ export async function GET(req: Request) {
           preco_unitario,
           produtos ( id, nome, imagem_url )
         )
-      `)
-      .order("criado_em", { ascending: false });
+      `, { count: "exact" })
+      .order("criado_em", { ascending: false })
+      .range(offset, offset + limit - 1);
 
     // Se não for admin, filtra apenas os pedidos do próprio usuário
     if (!user.e_admin) {
       query = query.eq("membro_id", user.id);
     }
 
-    const { data: pedidos, error } = await query;
+    const { data: pedidos, count, error } = await query;
 
     if (error) {
       console.error("Erro ao buscar pedidos:", error);
@@ -49,7 +58,12 @@ export async function GET(req: Request) {
       );
     }
 
-    return NextResponse.json({ pedidos: pedidos || [] });
+    return NextResponse.json({
+      pedidos: pedidos || [],
+      total: count ?? 0,
+      limit,
+      offset,
+    });
   } catch (err: any) {
     console.error("Erro na rota GET /api/orders:", err);
     return NextResponse.json(

@@ -390,6 +390,7 @@ const pt = {
   "store.noOrdersYet": "Você ainda não realizou nenhum pedido.",
   "store.loginToSeeOrders": "Faça login para ver seus pedidos.",
   "store.searchOrders": "Buscar por nome, e-mail ou nº do pedido...",
+  "store.loadMore": "Carregar mais",
 
   // ProductModal
   "productModal.new": "Novo Produto",
@@ -877,6 +878,7 @@ const en: Record<MessageKey, string> = {
   "store.noOrdersYet": "You haven't placed any orders yet.",
   "store.loginToSeeOrders": "Sign in to see your orders.",
   "store.searchOrders": "Search by name, e-mail or order #...",
+  "store.loadMore": "Load more",
   "productModal.new": "New Product",
   "productModal.edit": "Edit Product",
   "productModal.name": "Name",

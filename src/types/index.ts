@@ -57,8 +57,10 @@ export interface OrderItem {
   quantidade: number;
   preco_unitario: number;
   produtos?: {
+    id?: string;
     nome: string;
-  } | { nome: string }[] | null;
+    imagem_url?: string | null;
+  } | { id?: string; nome: string; imagem_url?: string | null }[] | null;
 }
 
 export interface Order {
@@ -67,10 +69,13 @@ export interface Order {
   status_pedido?: string;
   total?: number;
   criado_em?: string;
-  nome?: string;
-  status?: string;
-  pronto?: boolean;
   created_at?: string;
+  membros?: {
+    nome?: string;
+    email?: string;
+    curso?: string;
+    ano_turma?: string;
+  } | null;
   itens_pedido?: OrderItem[];
 }
 
