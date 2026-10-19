@@ -9,11 +9,11 @@
     "start": "next start",
     "lint": "eslint .",
     "test:e2e": "playwright test",
-    "test:integration:orders": "node --test tests/integration/orders.test.mjs"
+    "test:integration:orders": "node --test tests/integration/orders.test.mjs",
+    "test:unit": "node --test --import tsx tests/unit/*.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
-    "@newrelic/browser-agent": "^1.319.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-aspect-ratio": "^1.1.7",
@@ -82,6 +82,7 @@
     "lovable-tagger": "^1.1.13",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.23.15",
     "typescript": "^5.8.3"
   }
 }
