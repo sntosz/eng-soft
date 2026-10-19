@@ -8,7 +8,7 @@
     ],
     "allowJs": false,
     "skipLibCheck": true,
-    "strict": false,
+    "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
     "esModuleInterop": true,
@@ -16,7 +16,7 @@
     "module": "ESNext",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "baseUrl": ".",
     "paths": {
@@ -34,19 +34,13 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    "src/pages",
-    "src/App.tsx",
-    "src/main.tsx",
-    "vite.config.ts",
-    "tsconfig.app.json",
-    "tsconfig.node.json",
-    "playwright-fixture.ts",
     "playwright.config.ts",
-    "vitest.config.ts",
+    "e2e",
     "src/tests"
   ]
 }

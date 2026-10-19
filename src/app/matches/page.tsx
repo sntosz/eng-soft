@@ -1,0 +1,354 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import DashboardSidebar from "@/components/DashboardSidebar";
+import { Trophy, Calendar, MapPin, Clock, Plus, Edit2, Trash2 } from "lucide-react";
+import Image from "next/image";
+import logoSwe from "@/assets/logo-swe.png";
+import logoLaw from "@/assets/logo-law.png";
+import { Match } from "@/types";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useI18n } from "@/contexts/I18nContext";
+import { MatchModal } from "@/components/MatchModal";
+import { isValidImageUrl } from "@/lib/utils";
+import { toast } from "@/components/ui/sonner";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+const MatchesPage = () => {
+  const { user } = useCurrentUser();
+  const { t } = useI18n();
+  const isAdmin = user?.e_admin === true;
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+  const [matchToDelete, setMatchToDelete] = useState<Match | null>(null);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const loadMatches = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const res = await fetch("/api/matches");
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || t("matches.errorLoad"));
+      setMatches(data.matches || []);
+    } catch (err: any) {
+      console.error("Erro ao buscar partidas:", err);
+      setError(err.message || t("matches.errorLoad"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMatches();
+  }, []);
+
+  const handleCreate = () => {
+    setSelectedMatch(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (m: Match) => {
+    setSelectedMatch(m);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (match: Match) => {
+    setMatchToDelete(match);
+  };
+
+  const confirmDelete = async () => {
+    if (!matchToDelete) return;
+
+    const matchId = matchToDelete.id;
+    setMatchToDelete(null);
+
+    try {
+      const res = await fetch(`/api/matches?id=${matchId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || t("matches.errorDelete"));
+
+      setMatches((prev) => prev.filter((match) => match.id !== matchId));
+      toast.success(t("matches.deleted"));
+    } catch (err: any) {
+      toast.error(err.message || t("matches.errorDelete"));
+    }
+  };
+
+  const handleSubmit = async (data: Partial<Match>) => {
+    try {
+      const method = data.id ? "PUT" : "POST";
+      const res = await fetch("/api/matches", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || t("matches.errorSave"));
+
+      toast.success(data.id ? t("matches.updated") : t("matches.created"));
+      setIsModalOpen(false);
+      await loadMatches();
+    } catch (err: any) {
+      toast.error(err.message || t("matchModal.error"));
+    }
+  };
+
+  const now = new Date();
+  const upcomingMatches = matches.filter((m) => new Date(m.data_partida) >= now);
+  const pastMatches = matches
+      .filter((m) => new Date(m.data_partida) < now)
+      .reverse();
+
+  const MatchCard = ({ match, isPast }: { match: Match; isPast: boolean }) => {
+    const home = typeof match.time_casa === "string" ? match.time_casa : t("matchModal.homeTeam");
+    const away = typeof match.time_visitante === "string" ? match.time_visitante : t("home.visitor");
+    const date = new Date(match.data_partida);
+    const casaGanhou = Boolean(match.vitoria_atletica);
+
+    return (
+        <div
+            className={`bg-card border border-border rounded-xl p-6 transition-all ${
+                !isPast ? "card-glow" : ""
+            }`}
+        >
+          <div className="flex items-center justify-between mb-4 border-b border-border pb-4">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Calendar className="w-4 h-4 text-primary" />
+              {date.toLocaleDateString("pt-BR")}
+            </span>
+              <span className="flex items-center gap-1.5">
+              <Clock className="w-4 h-4 text-primary" />
+                {date.toLocaleTimeString("pt-BR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+            </span>
+              <span className="flex items-center gap-1.5">
+              <MapPin className="w-4 h-4 text-primary" />
+                {match.local_partida || t("matches.defaultLocation")}
+            </span>
+            </div>
+
+            {isPast ? (
+                <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        casaGanhou
+                            ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+                            : "bg-destructive/10 text-destructive border border-destructive/20"
+                    }`}
+                >
+              {casaGanhou ? t("matches.homeWin") : t("matches.homeLoss")}
+            </span>
+            ) : (
+                <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider gold-gradient text-primary-foreground">
+              Próximo Jogo
+            </span>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between">
+            {/* Time Casa */}
+            <div className="flex flex-col items-center gap-2 flex-1">
+              <div
+                  className={`w-20 h-20 rounded-full flex items-center justify-center p-3 border-2 overflow-hidden bg-muted ${
+                      isPast && casaGanhou ? "border-primary shadow-lg shadow-primary/20" : "border-border"
+                  }`}
+              >
+                <Image
+                    src={isValidImageUrl(match.foto_casa) ? match.foto_casa : logoSwe}
+                    alt={home}
+                    width={64}
+                    height={64}
+                    unoptimized={isValidImageUrl(match.foto_casa)}
+                    className="object-contain w-full h-full"
+                />
+              </div>
+              <span className="font-display font-bold text-base md:text-lg mt-2 text-center">
+              {home}
+            </span>
+              {isPast && casaGanhou && (
+                  <span className="text-[11px] font-bold text-primary uppercase tracking-wide">
+                Vencedor
+              </span>
+              )}
+            </div>
+
+            {/* VS ou Status */}
+            <div className="flex flex-col items-center gap-1 px-4 md:px-8">
+            <span className="font-display text-3xl md:text-4xl font-bold text-primary">
+              VS
+            </span>
+              {isPast && (
+                  <span className="text-[11px] text-muted-foreground uppercase tracking-widest font-medium">
+                Encerrado
+              </span>
+              )}
+            </div>
+
+            {/* Time Fora */}
+            <div className="flex flex-col items-center gap-2 flex-1">
+              <div
+                  className={`w-20 h-20 rounded-full flex items-center justify-center p-3 border-2 overflow-hidden bg-muted ${
+                      isPast && !casaGanhou ? "border-primary shadow-lg shadow-primary/20" : "border-border"
+                  }`}
+              >
+                <Image
+                    src={isValidImageUrl(match.foto_visitante) ? match.foto_visitante : logoLaw}
+                    alt={away}
+                    width={64}
+                    height={64}
+                    unoptimized={isValidImageUrl(match.foto_visitante)}
+                    className="object-contain w-full h-full"
+                />
+              </div>
+              <span className="font-display font-bold text-base md:text-lg mt-2 text-center">
+              {away}
+            </span>
+              {isPast && !casaGanhou && (
+                  <span className="text-[11px] font-bold text-primary uppercase tracking-wide">
+                Vencedor
+              </span>
+              )}
+            </div>
+          </div>
+
+          {isAdmin && (
+              <div className="mt-4 pt-4 border-t border-border flex gap-2 justify-end">
+                <button
+                    onClick={() => handleEdit(match)}
+                    className="border border-border px-3 py-1 rounded text-xs flex items-center gap-1 hover:bg-secondary transition-colors"
+                >
+                  <Edit2 className="w-3 h-3" /> {t("common.edit")}
+                </button>
+                <button
+                    onClick={() => handleDelete(match)}
+                    className="bg-destructive/10 text-destructive px-3 py-1 rounded text-xs flex items-center gap-1 hover:bg-destructive/20 transition-colors"
+                >
+                  <Trash2 className="w-3 h-3" /> {t("common.delete")}
+                </button>
+              </div>
+          )}
+        </div>
+    );
+  };
+
+  return (
+      <div className="flex min-h-screen bg-background">
+        <DashboardSidebar />
+
+        <main className="flex-1 overflow-y-auto">
+          <header className="sticky top-0 z-10 surface-glass border-b border-border px-6 py-4 flex items-center justify-between">
+            <div>
+              <h1 className="font-display text-xl font-bold text-foreground flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-primary" />
+                {t("matches.title")}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {t("matches.subtitle")}
+              </p>
+            </div>
+          </header>
+
+          <div className="p-6 max-w-5xl mx-auto space-y-12">
+            {isAdmin && (
+                <div className="flex justify-end mb-4">
+                  <button
+                      onClick={handleCreate}
+                      className="gold-gradient text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" /> {t("matches.new")}
+                  </button>
+                </div>
+            )}
+
+            {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <p className="text-muted-foreground">{t("matches.loading")}</p>
+                </div>
+            ) : error ? (
+                <div className="flex items-center justify-center py-12">
+                  <p className="text-destructive">{error}</p>
+                </div>
+            ) : (
+                <>
+                  {upcomingMatches.length > 0 && (
+                      <section>
+                        <h2 className="font-display text-2xl font-bold mb-6 flex items-center gap-2">
+                          <span className="w-2 h-8 gold-gradient rounded-full inline-block"></span>
+                          {t("matches.upcoming")}
+                        </h2>
+                        <div className="space-y-6">
+                          {upcomingMatches.map((m) => (
+                              <MatchCard key={m.id} match={m} isPast={false} />
+                          ))}
+                        </div>
+                      </section>
+                  )}
+
+                  {pastMatches.length > 0 && (
+                      <section>
+                        <h2 className="font-display text-2xl font-bold mb-6 text-muted-foreground flex items-center gap-2">
+                          <span className="w-2 h-8 bg-muted rounded-full inline-block"></span>
+                          {t("matches.results")}
+                        </h2>
+                        <div className="space-y-6 opacity-90">
+                          {pastMatches.map((m) => (
+                              <MatchCard key={m.id} match={m} isPast={true} />
+                          ))}
+                        </div>
+                      </section>
+                  )}
+
+                  {matches.length === 0 && (
+                      <div className="flex items-center justify-center py-12 border-2 border-dashed border-border rounded-xl">
+                        <p className="text-muted-foreground">{t("matches.empty")}</p>
+                      </div>
+                  )}
+                </>
+            )}
+          </div>
+
+          <MatchModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              onSubmit={handleSubmit}
+              initialData={selectedMatch || undefined}
+          />
+          <Dialog open={matchToDelete !== null} onOpenChange={(open) => !open && setMatchToDelete(null)}>
+            <DialogContent className="max-w-md border-border bg-card">
+              <DialogHeader>
+                <DialogTitle>{t("matches.deleteConfirm")}</DialogTitle>
+                <DialogDescription>
+                  {t("matches.deleteBody")}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="flex-row justify-end gap-2 space-x-0">
+                <Button variant="outline" onClick={() => setMatchToDelete(null)}>
+                  {t("common.cancel")}
+                </Button>
+                <Button variant="destructive" onClick={confirmDelete}>
+                  {t("common.confirm")}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </main>
+      </div>
+  );
+};
+
+export default MatchesPage;

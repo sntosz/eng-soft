@@ -1,0 +1,3 @@
+# Configuração mínima para `supabase start` (desenvolvimento local e CI).
+# O Supabase CLI preenche os demais valores com os defaults.
+project_id = "engsoft"

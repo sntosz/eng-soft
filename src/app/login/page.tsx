@@ -1,25 +1,64 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Lock, Mail, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { Eye, EyeOff, Lock, Mail, ShieldCheck, AlertCircle, Loader2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import logoAaaes from "@/assets/logo-aaaes.png";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useI18n } from "@/contexts/I18nContext";
 
 const LoginPage = () => {
+  const { t } = useI18n();
   const router = useRouter();
+  const { isLoggedIn, loading: userLoading, refreshUser } = useCurrentUser();
+
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Redireciona caso já esteja autenticado
+  useEffect(() => {
+    if (!userLoading && isLoggedIn) {
+      router.replace("/");
+    }
+  }, [userLoading, isLoggedIn, router]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem("aaaes:isLoggedIn", "true");
-    router.push("/");
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json?.error || t("login.error"));
+        setLoading(false);
+        return;
+      }
+
+      // Atualiza o estado global de autenticação imediatamente
+      await refreshUser();
+      router.push("/");
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message || t("login.errorConnection"));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -43,21 +82,22 @@ const LoginPage = () => {
             <div className="absolute inset-0 rounded-full bg-primary/20 blur-3xl scale-110" />
             <Image
               src={logoAaaes}
-              alt="Logotipo da A.A.A.E.S. - Atlética de Engenharia de Software"
+              alt="A.A.A.E.S."
               width={320}
               height={320}
+              priority
               className="relative w-80 h-80 object-contain drop-shadow-[0_0_40px_hsl(var(--primary)/0.4)]"
             />
           </div>
           <div className="space-y-2">
             <p className="text-xs uppercase tracking-[0.4em] text-primary font-semibold">
-              Associação Atlética Acadêmica
+              {t("auth.assoc")}
             </p>
             <h1 className="text-4xl font-bold tracking-tight">
               Engenharia <span className="gold-text">de Software</span>
             </h1>
             <p className="text-sm text-muted-foreground italic">
-              "Código. Disciplina. Domínio."
+              &quot;{t("auth.motto")}&quot;
             </p>
           </div>
         </section>
@@ -74,21 +114,36 @@ const LoginPage = () => {
               />
             </div>
 
-            <header className="mb-8">
-              <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-primary mb-3">
-                <ShieldCheck className="w-4 h-4" />
-                <span>Acesso de Membro</span>
+            <header className="mb-6">
+              <div className="flex justify-between items-center mb-3">
+                <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-primary font-semibold">
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>{t("login.subtitle")}</span>
+                </div>
+                <Link
+                  href="/"
+                  className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium"
+                >
+                  ← {t("common.backHome")}
+                </Link>
               </div>
-              <h2 className="text-3xl font-bold mb-2">Bem-vindo de volta</h2>
+              <h2 className="text-3xl font-bold mb-2">{t("login.title")}</h2>
               <p className="text-sm text-muted-foreground">
-                Entre na sua conta para acessar o painel da Atlética.
+                {t("login.subtitlePanel")}
               </p>
             </header>
+
+            {error && (
+              <div className="mb-5 p-3.5 rounded-lg bg-destructive/15 border border-destructive/30 text-destructive text-sm flex items-start gap-2.5 animate-in fade-in duration-200">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{error}</span>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-foreground/80">
-                  E-mail institucional
+                  {t("login.email")}
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -107,14 +162,14 @@ const LoginPage = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="text-foreground/80">
-                    Senha
+                    {t("login.password")}
                   </Label>
-                  <a
-                    href="#"
+                  <Link
+                    href="/forgot-password"
                     className="text-xs text-primary hover:underline font-medium"
                   >
-                    Esqueceu a senha?
-                  </a>
+                    {t("login.forgot")}
+                  </Link>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -131,7 +186,7 @@ const LoginPage = () => {
                     type="button"
                     onClick={() => setShowPassword((value) => !value)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                    aria-label={showPassword ? t("common.hidePassword") : t("common.showPassword")}
                   >
                     {showPassword ? (
                       <EyeOff className="w-4 h-4" />
@@ -148,21 +203,39 @@ const LoginPage = () => {
                   htmlFor="remember"
                   className="text-sm text-muted-foreground font-normal cursor-pointer"
                 >
-                  Manter conectado neste dispositivo
+                  {t("login.remember")}
                 </Label>
               </div>
 
               <Button
                 type="submit"
-                className="w-full h-12 text-base font-semibold gold-gradient hover:opacity-90 transition-opacity"
+                disabled={loading}
+                className="w-full h-12 text-base font-semibold gold-gradient hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
               >
-                Entrar no Painel
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>{t("login.submitting")}</span>
+                  </>
+                ) : (
+                  <span>{t("login.submit")}</span>
+                )}
               </Button>
             </form>
+
+            <div className="mt-6 pt-6 border-t border-border text-center">
+              <p className="text-xs text-muted-foreground">
+                {t("login.kitCta")}{" "}
+                <Link href="/register" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">
+                  <UserPlus className="w-3.5 h-3.5" />
+                  {t("login.requestAccess")}
+                </Link>
+              </p>
+            </div>
           </div>
 
           <p className="text-center text-xs text-muted-foreground mt-6">
-            © {new Date().getFullYear()} A.A.A.E.S. — Todos os direitos reservados.
+            © {new Date().getFullYear()} A.A.A.E.S. — {t("common.rights")}
           </p>
         </section>
       </div>

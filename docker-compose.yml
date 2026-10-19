@@ -1,0 +1,21 @@
+services:
+  web:
+    build: .
+    container_name: nextjs_app
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mapeia o projeto local para dentro do container
+      - .:/app
+      # ISOLA o node_modules e o cache do .next dentro do Linux do container
+      - /app/node_modules
+      - /app/.next
+    env_file:
+      - .env.local
+    environment:
+      - NODE_ENV=development
+      # Força o Watchpack/Webpack a verificar alteração de arquivos no disco
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+      # Garanta a porta dos WebSockets para o Fast Refresh
+      - WDS_SOCKET_PORT=3000
