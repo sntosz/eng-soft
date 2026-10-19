@@ -105,6 +105,7 @@ export const adminMemberUpdateSchema = z.object({
   id: z.string().uuid("ID inválido"),
   ...memberProfileFields,
   password: z.union([z.literal(""), z.string().min(6, "Senha deve ter pelo menos 6 caracteres")]).optional(),
+  ativo: z.boolean().optional(),
 });
 
 export const forgotPasswordSchema = z.object({

@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAuthUser } from "@/lib/authServer";
+import { parsePagination } from "@/lib/pagination";
 import { createTicketSchema, updateTicketStatusSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
 // GET /api/tickets -> Lista ingressos (admin vê todos; membro vê apenas os próprios)
-export async function GET() {
+// Suporta paginação via ?limit= e ?offset=
+export async function GET(req: Request) {
   try {
     const user = await getAuthUser();
     if (!user) {
@@ -15,6 +17,9 @@ export async function GET() {
         { status: 401 }
       );
     }
+
+    const { searchParams } = new URL(req.url);
+    const { limit, offset } = parsePagination(searchParams);
 
     let query = supabaseAdmin
       .from("ingressos")
@@ -29,14 +34,15 @@ export async function GET() {
         criado_em,
         membros ( nome, email, curso ),
         eventos ( id, nome, data_evento, local, imagem_url )
-      `)
-      .order("criado_em", { ascending: false });
+      `, { count: "exact" })
+      .order("criado_em", { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (!user.e_admin) {
       query = query.eq("membro_id", user.id);
     }
 
-    const { data: ingressos, error } = await query;
+    const { data: ingressos, count, error } = await query;
 
     if (error) {
       console.error("Erro ao buscar ingressos:", error);
@@ -46,7 +52,12 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json({ ingressos: ingressos || [] });
+    return NextResponse.json({
+      ingressos: ingressos || [],
+      total: count ?? 0,
+      limit,
+      offset,
+    });
   } catch (err: any) {
     console.error("Erro na rota GET /api/tickets:", err);
     return NextResponse.json(

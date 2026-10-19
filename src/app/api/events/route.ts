@@ -1,24 +1,45 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireAdmin } from "@/lib/authServer";
+import { parsePagination } from "@/lib/pagination";
 import { eventSchema, eventUpdateSchema, uuidSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
 // GET /api/events -> Lista eventos (público)
-export async function GET() {
+// Filtros: ?upcoming=true (futuros) | ?upcoming=false (passados)
+// Paginação: ?limit= & ?offset=
+export async function GET(req: Request) {
   try {
-    const { data, error } = await supabaseAdmin
+    const { searchParams } = new URL(req.url);
+    const { limit, offset } = parsePagination(searchParams);
+
+    let query = supabaseAdmin
       .from("eventos")
-      .select("*")
-      .order("data_evento", { ascending: true });
+      .select("*", { count: "exact" })
+      .order("data_evento", { ascending: true })
+      .range(offset, offset + limit - 1);
+
+    const upcoming = searchParams.get("upcoming");
+    if (upcoming === "true") {
+      query = query.gte("data_evento", new Date().toISOString());
+    } else if (upcoming === "false") {
+      query = query.lt("data_evento", new Date().toISOString());
+    }
+
+    const { data, count, error } = await query;
 
     if (error) {
       console.error("Erro ao buscar eventos:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ events: data || [] });
+    return NextResponse.json({
+      events: data || [],
+      total: count ?? 0,
+      limit,
+      offset,
+    });
   } catch (err: unknown) {
     console.error("Erro na rota GET /api/events:", err);
     return NextResponse.json(

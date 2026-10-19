@@ -18,8 +18,8 @@ export async function PUT(req: Request) {
       );
     }
 
-    const { id, nome, email, curso, ano_curso, password } = parseResult.data;
-    const updateData: { nome: string; email: string; curso: string; ano_turma: string; senha_hash?: string } = {
+    const { id, nome, email, curso, ano_curso, password, ativo } = parseResult.data;
+    const updateData: { nome: string; email: string; curso: string; ano_turma: string; senha_hash?: string; ativo?: boolean } = {
       nome,
       email,
       curso,
@@ -28,6 +28,11 @@ export async function PUT(req: Request) {
 
     if (password) {
       updateData.senha_hash = await hashPassword(password);
+    }
+
+    // Permite reativar um membro desativado (soft delete) enviando ativo: true
+    if (ativo !== undefined) {
+      updateData.ativo = ativo;
     }
 
     const { data, error } = await supabaseAdmin

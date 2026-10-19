@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS membros (
   e_admin BOOLEAN DEFAULT FALSE,
   senha_hash TEXT,
   senha_atualizada_em TIMESTAMP WITH TIME ZONE,
+  ativo BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

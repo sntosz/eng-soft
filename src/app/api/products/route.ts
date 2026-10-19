@@ -2,25 +2,36 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { mapProduct, removeProductImage } from "@/lib/products";
 import { requireAdmin } from "@/lib/authServer";
+import { parsePagination } from "@/lib/pagination";
 import { productUpdateSchema, uuidSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
 // Vitrine é pública: visitante também vê os produtos.
-export async function GET() {
+// Suporta paginação via ?limit= e ?offset=
+export async function GET(req: Request) {
   try {
-    const { data, error } = await supabaseAdmin
+    const { searchParams } = new URL(req.url);
+    const { limit, offset } = parsePagination(searchParams);
+
+    const { data, count, error } = await supabaseAdmin
       .from("produtos")
-      .select("id,nome,descricao,preco,estoque,imagem_url,destaque")
+      .select("id,nome,descricao,preco,estoque,imagem_url,destaque", { count: "exact" })
       .order("destaque", { ascending: false })
-      .order("nome", { ascending: true });
+      .order("nome", { ascending: true })
+      .range(offset, offset + limit - 1);
 
     if (error) {
       console.error("Supabase error:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ products: (data || []).map(mapProduct) });
+    return NextResponse.json({
+      products: (data || []).map(mapProduct),
+      total: count ?? 0,
+      limit,
+      offset,
+    });
   } catch (err: unknown) {
     console.error("Error fetching products:", err);
     return NextResponse.json(

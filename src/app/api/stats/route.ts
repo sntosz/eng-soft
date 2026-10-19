@@ -13,7 +13,10 @@ export async function GET() {
       { count: ordersCount, error: ordersError },
       { count: eventsCount, error: eventsError },
     ] = await Promise.all([
-      supabaseAdmin.from("membros").select("*", { count: "exact", head: true }),
+      supabaseAdmin
+        .from("membros")
+        .select("*", { count: "exact", head: true })
+        .eq("ativo", true),
       supabaseAdmin
         .from("partidas")
         .select("*", { count: "exact", head: true })

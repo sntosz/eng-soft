@@ -31,11 +31,11 @@ export async function getAuthUser(): Promise<AuthUser | null> {
 
   const { data, error } = await supabaseAdmin
     .from("membros")
-    .select("id,nome,email,curso,ano_turma,e_admin")
+    .select("id,nome,email,curso,ano_turma,e_admin,ativo")
     .eq("id", decoded.sub)
     .maybeSingle();
 
-  if (error || !data) return null;
+  if (error || !data || (data as any).ativo === false) return null;
 
   return {
     id: data.id,

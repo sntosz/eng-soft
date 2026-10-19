@@ -5,12 +5,12 @@ export async function authenticate(email: string, password: string) {
 
     const res = await supabaseAdmin
         .from("membros")
-        .select("id,nome,email,curso,ano_turma,senha_hash")
+        .select("id,nome,email,curso,ano_turma,senha_hash,ativo")
         .eq("email", email)
         .maybeSingle();
 
     if (res.error) throw new Error(res.error.message);
-    if (res.data) {
+    if (res.data && (res.data as any).ativo !== false) {
         const ok = await comparePassword(password, (res.data as any).senha_hash);
         if (!ok) return null;
         const ano_curso = (res.data as any).ano_turma;

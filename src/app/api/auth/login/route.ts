@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
     const { data, error } = await supabaseAdmin
       .from("membros")
-      .select("id,nome,email,curso,ano_turma,senha_hash,e_admin")
+      .select("id,nome,email,curso,ano_turma,senha_hash,e_admin,ativo")
       .eq("email", email.trim().toLowerCase())
       .maybeSingle();
 
@@ -35,6 +35,13 @@ export async function POST(req: Request) {
 
     if (!data) {
       return NextResponse.json({ error: "Credenciais inválidas" }, { status: 401 });
+    }
+
+    if ((data as any).ativo === false) {
+      return NextResponse.json(
+        { error: "Esta conta está desativada. Fale com a diretoria." },
+        { status: 403 }
+      );
     }
 
     const hash = (data as any).senha_hash || (data as any).password_hash || null;

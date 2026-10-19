@@ -1,24 +1,53 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireAdmin } from "@/lib/authServer";
+import { parsePagination } from "@/lib/pagination";
 import { matchSchema, matchUpdateSchema, uuidSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
 // GET /api/matches -> Lista partidas (público)
-export async function GET() {
+// Filtros: ?upcoming=true (futuras) | ?upcoming=false (passadas)
+//          ?status=concluida | ?status=agendada
+// Paginação: ?limit= & ?offset=
+export async function GET(req: Request) {
   try {
-    const { data, error } = await supabaseAdmin
+    const { searchParams } = new URL(req.url);
+    const { limit, offset } = parsePagination(searchParams);
+
+    let query = supabaseAdmin
       .from("partidas")
-      .select("*")
-      .order("data_partida", { ascending: true });
+      .select("*", { count: "exact" })
+      .order("data_partida", { ascending: true })
+      .range(offset, offset + limit - 1);
+
+    const upcoming = searchParams.get("upcoming");
+    if (upcoming === "true") {
+      query = query.gte("data_partida", new Date().toISOString());
+    } else if (upcoming === "false") {
+      query = query.lt("data_partida", new Date().toISOString());
+    }
+
+    const status = searchParams.get("status");
+    if (status === "concluida") {
+      query = query.eq("concluida", true);
+    } else if (status === "agendada") {
+      query = query.eq("concluida", false);
+    }
+
+    const { data, count, error } = await query;
 
     if (error) {
       console.error("Erro ao buscar partidas:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ matches: data || [] });
+    return NextResponse.json({
+      matches: data || [],
+      total: count ?? 0,
+      limit,
+      offset,
+    });
   } catch (err: unknown) {
     console.error("Erro na rota GET /api/matches:", err);
     return NextResponse.json(
