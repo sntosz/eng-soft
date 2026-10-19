@@ -23,7 +23,7 @@ test.describe("Cadastro (solicitação de acesso)", () => {
     );
   });
 
-  test("deve validar senha com menos de 6 caracteres", async ({ page }) => {
+  test("deve validar senha fraca", async ({ page }) => {
     await page.goto("/register");
 
     await page.locator("#nome").fill("Membro Teste");
@@ -36,7 +36,7 @@ test.describe("Cadastro (solicitação de acesso)", () => {
     await page.getByRole("button", { name: /solicitar acesso/i }).click();
 
     await expect(page.locator("body")).toContainText(
-      /senha deve ter no mínimo 6 caracteres/i
+      /senha deve ter no mínimo 8 caracteres/i
     );
   });
 });

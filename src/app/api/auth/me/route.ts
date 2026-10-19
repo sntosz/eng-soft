@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { comparePassword, hashPassword } from "@/lib/auth";
 import { getAuthUser } from "@/lib/authServer";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { isStrongPassword } from "@/lib/password";
 
 export const dynamic = "force-dynamic";
 
@@ -51,9 +52,9 @@ export async function PUT(req: Request) {
     }
 
     if (typeof currentPassword === "string" || typeof newPassword === "string") {
-      if (!currentPassword || !newPassword || String(newPassword).length < 6) {
+      if (!currentPassword || !newPassword || !isStrongPassword(String(newPassword))) {
         return NextResponse.json(
-          { error: "Informe a senha atual e uma nova senha com pelo menos 6 caracteres." },
+          { error: "Informe a senha atual e uma nova senha com pelo menos 8 caracteres, contendo letras e números." },
           { status: 400 }
         );
       }

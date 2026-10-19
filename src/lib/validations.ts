@@ -40,6 +40,12 @@ const imageUrlSchema = z.union([
 ]).optional().default("");
 
 // Autenticação
+const strongPasswordSchema = z
+  .string({ required_error: "Senha é obrigatória" })
+  .min(8, "Senha deve ter pelo menos 8 caracteres")
+  .regex(/[A-Za-z]/, "Senha deve conter pelo menos uma letra")
+  .regex(/\d/, "Senha deve conter pelo menos um número");
+
 export const loginSchema = z.object({
   email: z
     .string({ required_error: "E-mail é obrigatório" })
@@ -68,9 +74,7 @@ export const registerSchema = z.object({
     .trim()
     .min(1, "Informe o número da matrícula (RGM)")
     .max(40, "RGM inválido"),
-  password: z
-    .string({ required_error: "Senha é obrigatória" })
-    .min(6, "Senha deve ter pelo menos 6 caracteres"),
+  password: strongPasswordSchema,
   curso: z
     .string({ required_error: "Curso é obrigatório" })
     .trim()
@@ -98,13 +102,13 @@ const memberProfileFields = {
 
 export const adminMemberCreateSchema = z.object({
   ...memberProfileFields,
-  password: z.string({ required_error: "Senha é obrigatória" }).min(6, "Senha deve ter pelo menos 6 caracteres"),
+  password: strongPasswordSchema,
 });
 
 export const adminMemberUpdateSchema = z.object({
   id: z.string().uuid("ID inválido"),
   ...memberProfileFields,
-  password: z.union([z.literal(""), z.string().min(6, "Senha deve ter pelo menos 6 caracteres")]).optional(),
+  password: z.union([z.literal(""), strongPasswordSchema]).optional(),
   ativo: z.boolean().optional(),
 });
 
@@ -128,9 +132,7 @@ export const resetPasswordSchema = z.object({
     .string({ required_error: "Código de verificação é obrigatório" })
     .trim()
     .regex(/^\d{6}$/, "O código de verificação deve ter exatamente 6 dígitos"),
-  newPassword: z
-    .string({ required_error: "Nova senha é obrigatória" })
-    .min(6, "A nova senha deve ter pelo menos 6 caracteres"),
+  newPassword: strongPasswordSchema,
   resetToken: z
     .string({ required_error: "Token de recuperação é obrigatório" })
     .min(1, "Token de recuperação ausente"),

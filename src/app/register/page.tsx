@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import logoAaaes from "@/assets/logo-aaaes.png";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useI18n } from "@/contexts/I18nContext";
+import { isStrongPassword } from "@/lib/password";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -46,7 +47,7 @@ export default function RegisterPage() {
       return;
     }
 
-    if (senha.length < 6) {
+    if (!isStrongPassword(senha)) {
       setError(t("register.errorLength"));
       setLoading(false);
       return;

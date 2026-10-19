@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/input-otp";
 import logoAaaes from "@/assets/logo-aaaes.png";
 import { useI18n } from "@/contexts/I18nContext";
+import { isStrongPassword } from "@/lib/password";
 
 type Step = "request" | "verify_and_reset" | "success";
 
@@ -151,7 +152,7 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    if (newPassword.length < 6) {
+    if (!isStrongPassword(newPassword)) {
       setError(t("forgot.errorLength"));
       return;
     }

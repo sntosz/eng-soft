@@ -207,7 +207,7 @@ const pt = {
   "register.hasAccount": "Já tem uma conta?",
   "register.login": "Fazer login",
   "register.errorMismatch": "As senhas informadas não coincidem.",
-  "register.errorLength": "A senha deve ter no mínimo 6 caracteres.",
+  "register.errorLength": "A senha deve ter no mínimo 8 caracteres, com letras e números.",
   "register.error": "Falha ao realizar cadastro.",
 
   // Register extra
@@ -226,7 +226,7 @@ const pt = {
   "forgot.codeLabel": "Código de 6 dígitos",
   "forgot.codeIncomplete": "Digite o código completo de 6 dígitos.",
   "forgot.newPassword": "Nova senha",
-  "forgot.newPasswordPlaceholder": "Mínimo de 6 caracteres",
+  "forgot.newPasswordPlaceholder": "Mínimo de 8 caracteres, com letras e números",
   "forgot.confirmPassword": "Repita a nova senha",
   "forgot.submit": "Redefinir Senha",
   "forgot.submitting": "Atualizando senha...",
@@ -243,7 +243,7 @@ const pt = {
   "forgot.errorResend": "Não foi possível reenviar o código.",
   "forgot.errorReset": "Falha ao redefinir a senha.",
   "forgot.errorMismatch": "As senhas digitadas não coincidem.",
-  "forgot.errorLength": "A nova senha deve ter pelo menos 6 caracteres.",
+  "forgot.errorLength": "A nova senha deve ter pelo menos 8 caracteres, com letras e números.",
 
   // Forgot extra
   "forgot.title": "Esqueceu sua senha?",
@@ -693,7 +693,7 @@ const en: Record<MessageKey, string> = {
   "register.hasAccount": "Already have an account?",
   "register.login": "Sign in",
   "register.errorMismatch": "The passwords entered do not match.",
-  "register.errorLength": "Password must be at least 6 characters.",
+  "register.errorLength": "Password must be at least 8 characters, with letters and numbers.",
   "register.error": "Sign-up failed.",
 
   // Register extra
@@ -714,7 +714,7 @@ const en: Record<MessageKey, string> = {
   "forgot.codeLabel": "6-digit code",
   "forgot.codeIncomplete": "Enter the full 6-digit code.",
   "forgot.newPassword": "New password",
-  "forgot.newPasswordPlaceholder": "At least 6 characters",
+  "forgot.newPasswordPlaceholder": "At least 8 characters, with letters and numbers",
   "forgot.confirmPassword": "Repeat the new password",
   "forgot.submit": "Reset Password",
   "forgot.submitting": "Updating password...",
@@ -731,7 +731,7 @@ const en: Record<MessageKey, string> = {
   "forgot.errorResend": "Could not resend the code.",
   "forgot.errorReset": "Failed to reset the password.",
   "forgot.errorMismatch": "The passwords entered do not match.",
-  "forgot.errorLength": "The new password must be at least 6 characters.",
+  "forgot.errorLength": "The new password must be at least 8 characters, with letters and numbers.",
 
   // Forgot extra
   "forgot.title": "Forgot your password?",
